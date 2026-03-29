@@ -10,7 +10,7 @@
 ### Pull Request Tracker
 
 ```md
-<img src="https://YOUR-DOMAIN/api/pr-card?username=YOUR_USERNAME" />
+<img src="https://gitly-iota.vercel.app?username=YOUR_USERNAME" />
 ```
 
 Shows all pull requests grouped by repo, with PR number, title, and state (open / merged / closed).
