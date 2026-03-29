@@ -17,7 +17,7 @@ No GitHub token is required for basic usage.
 Replace YOUR_USERNAME with your GitHub username.
 
 ```md
-<img height="155em" src="https://your-deployment.vercel.app/api/pull-requests?username=YOUR_USERNAME&theme=synthwave&hide_border=true&bg_color=070d0d&border_color=white&title_color=orange&text_color=white" alt="Pull Requests"/>
+<img height="155em" src="https:gitly-iota.vercel.app/api/pull-requests?username=YOUR_USERNAME&theme=synthwave&hide_border=true&bg_color=070d0d&border_color=white&title_color=orange&text_color=white" alt="Pull Requests"/>
 
 <img height="220em" src="https://your-deployment.vercel.app/api/contributions?username=YOUR_USERNAME&theme=synthwave&hide_border=true&bg_color=070d0d&border_color=white&title_color=orange&text_color=white" alt="Contributions"/>
 ```
