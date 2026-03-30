@@ -169,4 +169,72 @@ module.exports = {
   groupPRsByRepo,
   fetchUserProfile,
   fetchContributionData,
+  fetchUserLanguages,
 };
+
+/**
+ * Fetch language usage across user's public repos.
+ * Aggregates language bytes from all repos.
+ */
+async function fetchUserLanguages(username) {
+  let page = 1;
+  const langMap = {};
+  let totalBytes = 0;
+
+  while (page <= 5) {
+    const url = `${GITHUB_API}/users/${username}/repos?per_page=100&page=${page}&type=owner&sort=updated`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "gitly-app",
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+
+    if (!res.ok) break;
+
+    const repos = await res.json();
+    if (!repos.length) break;
+
+    // Fetch language data for each repo (only fork=false to count unique repos)
+    const promises = repos
+      .filter((r) => !r.fork && r.size > 0)
+      .slice(0, 30) // limit to 30 repos to avoid rate limits
+      .map(async (repo) => {
+        try {
+          const langRes = await fetch(repo.languages_url, {
+            headers: {
+              "User-Agent": "gitly-app",
+              Accept: "application/vnd.github.v3+json",
+            },
+          });
+          if (langRes.ok) {
+            return langRes.json();
+          }
+        } catch {}
+        return {};
+      });
+
+    const results = await Promise.all(promises);
+
+    for (const langs of results) {
+      for (const [lang, bytes] of Object.entries(langs)) {
+        langMap[lang] = (langMap[lang] || 0) + bytes;
+        totalBytes += bytes;
+      }
+    }
+
+    if (repos.length < 100) break;
+    page++;
+  }
+
+  // Convert to array and calculate percentages
+  const languages = Object.entries(langMap)
+    .map(([name, bytes]) => ({
+      name,
+      bytes,
+      percentage: totalBytes > 0 ? ((bytes / totalBytes) * 100) : 0,
+    }))
+    .sort((a, b) => b.bytes - a.bytes);
+
+  return { languages, totalBytes };
+}
