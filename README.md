@@ -10,7 +10,7 @@ Shows your total pull requests grouped by repository.
 
 **Full layout (default):**
 ```
-https://your-vercel-url/api/pr-stats?username=YOUR_USERNAME
+https://https://gitlyy.vercel.app/api/pr-stats?username=YOUR_USERNAME
 ```
 
 <img src="https://your-vercel-url/api/pr-stats?username=torvalds&theme=dark&hide_border=true" alt="PR Stats" width="420"/>
@@ -52,7 +52,7 @@ Deploy your own instance to Vercel (free tier works):
 
 1. **Fork this repository**
 
-2. **Create a Vercel account** at [vercel.com](https://vercel.com) (free)
+2. **Create a Vercel account** at [vercel.com](https://gitlyy.vercel.app/) (free)
 
 3. **Import your forked repo** in Vercel:
    - Click "Add New..." -> "Project"
