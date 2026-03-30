@@ -57,6 +57,31 @@ Donut graph (new):
 <img src="https://gitlyy.vercel.app/api/languages?username=YOUR_USERNAME&layout=donut&hide_border=true"/>
 ```
 
+### 4. Master Card (NEW!)
+
+<img src="https://gitlyy.vercel.app/api/master?username=torvalds&hide_border=true" alt="Master Stats Card" width="100%"/>
+
+All-in-one comprehensive dashboard combining PR stats, languages, contributions, and repositories:
+
+```html
+<img src="https://gitlyy.vercel.app/api/master?username=YOUR_USERNAME&hide_border=true" width="100%"/>
+```
+
+With custom width:
+```html
+<img src="https://gitlyy.vercel.app/api/master?username=YOUR_USERNAME&hide_border=true&width=900"/>
+```
+
+### 5. Visitors Counter (NEW!)
+
+<img src="https://gitlyy.vercel.app/api/visitors?username=torvalds&hide_border=true" alt="Visitors Counter" height="120"/>
+
+Track profile views with a live visitor counter:
+
+```html
+<img src="https://gitlyy.vercel.app/api/visitors?username=YOUR_USERNAME&hide_border=true"/>
+```
+
 ---
 
 ## Unique Classic README Stack
@@ -64,9 +89,11 @@ Donut graph (new):
 ```markdown
 ## GitHub Dashboard
 
-<img src="https://gitlyy.vercel.app/api/contribution?username=YOUR_USERNAME&hide_border=true"/>
+<img src="https://gitlyy.vercel.app/api/visitors?username=YOUR_USERNAME&hide_border=true"/>
 
-<img src="https://gitlyy.vercel.app/api/contribution?username=YOUR_USERNAME&layout=pulse&hide_border=true"/>
+<img src="https://gitlyy.vercel.app/api/master?username=YOUR_USERNAME&hide_border=true"/>
+
+<img src="https://gitlyy.vercel.app/api/contribution?username=YOUR_USERNAME&hide_border=true"/>
 
 <img src="https://gitlyy.vercel.app/api/languages?username=YOUR_USERNAME&layout=donut&hide_border=true"/>
 

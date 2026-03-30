@@ -38,6 +38,26 @@ async function fetchUserPullRequests(username) {
 }
 
 /**
+ * Fetch open pull requests by a user across all public repos.
+ */
+async function fetchOpenPullRequests(username) {
+  const url = `${GITHUB_API}/search/issues?q=author:${username}+type:pr+state:open&per_page=1`;
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "gitly-app",
+      Accept: "application/vnd.github.v3+json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  return data.total_count || 0;
+}
+
+/**
  * Group pull requests by repository name.
  */
 function groupPRsByRepo(prs) {
@@ -180,6 +200,7 @@ function parseContributionHTML(html) {
 
 module.exports = {
   fetchUserPullRequests,
+  fetchOpenPullRequests,
   groupPRsByRepo,
   fetchUserProfile,
   fetchContributionData,

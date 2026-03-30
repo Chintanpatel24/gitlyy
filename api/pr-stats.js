@@ -5,7 +5,7 @@
  * Auto-refreshes every 30 minutes.
  */
 
-const { fetchUserPullRequests, groupPRsByRepo, fetchUserProfile } = require("../src/github");
+const { fetchUserPullRequests, fetchOpenPullRequests, groupPRsByRepo, fetchUserProfile } = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generatePRCardSVG, generatePRSummarySVG } = require("../src/svg-pr");
 const { getCache, setCache, clearCache } = require("../src/cache");
@@ -37,9 +37,10 @@ module.exports = async (req, res) => {
 
     if (!data) {
       try {
-        const [prs, profile] = await Promise.all([
+        const [prs, profile, openPRCount] = await Promise.all([
           fetchUserPullRequests(username),
           fetchUserProfile(username).catch(() => ({ name: username, login: username })),
+          fetchOpenPullRequests(username),
         ]);
 
         const repoMap = groupPRsByRepo(prs);
@@ -47,6 +48,7 @@ module.exports = async (req, res) => {
         data = {
           repoMap,
           totalPRs: prs.length,
+          openPRs: openPRCount,
           repoCount: Object.keys(repoMap).length,
           profileName: profile.name || profile.login || username,
         };
@@ -67,6 +69,7 @@ module.exports = async (req, res) => {
       ? generatePRSummarySVG({
           username: data.profileName,
           totalPRs: data.totalPRs,
+          openPRs: data.openPRs,
           repoCount: data.repoCount,
           colors,
           hideBorder: hide_border === "true",
@@ -76,6 +79,7 @@ module.exports = async (req, res) => {
           username: data.profileName,
           repoMap: data.repoMap,
           totalPRs: data.totalPRs,
+          openPRs: data.openPRs,
           colors,
           hideBorder: hide_border === "true",
           cardWidth: parseInt(width) || 440,

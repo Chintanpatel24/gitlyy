@@ -4,10 +4,10 @@
  */
 
 function generatePRCardSVG(options) {
-  const { username, repoMap, totalPRs, colors, title, hideBorder, cardWidth = 440 } = options;
+  const { username, repoMap, totalPRs, openPRs = 0, colors, title, hideBorder, cardWidth = 440 } = options;
   const repos = Object.entries(repoMap).sort((a, b) => b[1] - a[1]);
   const maxShow = Math.min(repos.length, 12);
-  const rowH = 28, pad = 24, hdr = 50;
+  const rowH = 28, pad = 24, hdr = 100;
   const cardHeight = hdr + maxShow * rowH + 12;
   const hba = hideBorder ? `rx="8"` : `rx="8" stroke="#30363d" stroke-width="1"`;
   const displayTitle = title || `${username}'s Pull Requests`;
@@ -31,16 +31,18 @@ function generatePRCardSVG(options) {
   <g transform="translate(${pad},10)"><circle cx="10" cy="18" r="4" fill="none" stroke="#${colors.accent_color}" stroke-width="1.5"/><line x1="14" y1="18" x2="17" y2="18" stroke="#${colors.accent_color}" stroke-width="1.5"/><circle cx="17" cy="14" r="2" fill="#${colors.accent_color}"/><line x1="10" y1="22" x2="10" y2="30" stroke="#${colors.accent_color}" stroke-width="1.5"/><circle cx="10" cy="32" r="2" fill="#${colors.accent_color}"/><text x="28" y="24" class="t" fill="#${colors.title_color}">${escapeXml(displayTitle)}</text></g>
   <rect x="${cardWidth - pad - 56}" y="16" width="56" height="22" rx="11" fill="#${colors.accent_color}" opacity=".12"/>
   <text x="${cardWidth - pad - 28}" y="31" text-anchor="middle" class="c" fill="#${colors.accent_color}">${totalPRs} PRs</text>
+  <rect x="${cardWidth - pad - 56}" y="48" width="56" height="22" rx="11" fill="#${colors.accent_color}" opacity=".08"/>
+  <text x="${cardWidth - pad - 28}" y="63" text-anchor="middle" class="c" fill="#${colors.accent_color}">${openPRs} Open</text>
   <line x1="${pad}" y1="${hdr}" x2="${cardWidth - pad}" y2="${hdr}" stroke="#30363d" stroke-width=".5"/>
   ${rows}
 </svg>`;
 }
 
 function generatePRSummarySVG(options) {
-  const { username, totalPRs, repoCount, colors, hideBorder, cardWidth = 400, cardHeight = 165 } = options;
+  const { username, totalPRs, openPRs = 0, repoCount, colors, hideBorder, cardWidth = 400, cardHeight = 165 } = options;
   const P = 24;
   const hba = hideBorder ? `rx="8"` : `rx="8" stroke="#30363d" stroke-width="1"`;
-  const sw = (cardWidth - P * 2 - 12) / 2;
+  const sw = (cardWidth - P * 2 - 24) / 3;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${cardWidth}" height="${cardHeight}" viewBox="0 0 ${cardWidth} ${cardHeight}">
   <style>.t{font:600 14px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.n{font:700 34px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.l{font:400 11px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}</style>
@@ -49,7 +51,8 @@ function generatePRSummarySVG(options) {
   <g transform="translate(${P},8)"><circle cx="10" cy="20" r="4" fill="none" stroke="#${colors.accent_color}" stroke-width="1.5"/><line x1="14" y1="20" x2="17" y2="20" stroke="#${colors.accent_color}" stroke-width="1.5"/><circle cx="17" cy="16" r="2" fill="#${colors.accent_color}"/><line x1="10" y1="24" x2="10" y2="32" stroke="#${colors.accent_color}" stroke-width="1.5"/><circle cx="10" cy="34" r="2" fill="#${colors.accent_color}"/><text x="28" y="26" class="t" fill="#${colors.title_color}">${escapeXml(username)}'s Pull Requests</text></g>
   <line x1="${P}" y1="48" x2="${cardWidth - P}" y2="48" stroke="#30363d" stroke-width=".5"/>
   <g transform="translate(${P},58)"><rect width="${sw}" height="78" rx="8" fill="#${colors.accent_color}" opacity=".06"/><text x="${sw / 2}" y="40" text-anchor="middle" class="n" fill="#${colors.accent_color}">${totalPRs}</text><text x="${sw / 2}" y="58" text-anchor="middle" class="l" fill="#8b949e">Pull Requests</text></g>
-  <g transform="translate(${P + sw + 12},58)"><rect width="${sw}" height="78" rx="8" fill="#e6edf3" opacity=".04"/><text x="${sw / 2}" y="40" text-anchor="middle" class="n" fill="#e6edf3">${repoCount}</text><text x="${sw / 2}" y="58" text-anchor="middle" class="l" fill="#8b949e">Repositories</text></g>
+  <g transform="translate(${P + sw + 12},58)"><rect width="${sw}" height="78" rx="8" fill="#${colors.accent_color}" opacity=".04"/><text x="${sw / 2}" y="40" text-anchor="middle" class="n" fill="#${colors.accent_color}">${openPRs}</text><text x="${sw / 2}" y="58" text-anchor="middle" class="l" fill="#8b949e">Open PRs</text></g>
+  <g transform="translate(${P + (sw + 12) * 2},58)"><rect width="${sw}" height="78" rx="8" fill="#e6edf3" opacity=".04"/><text x="${sw / 2}" y="40" text-anchor="middle" class="n" fill="#e6edf3">${repoCount}</text><text x="${sw / 2}" y="58" text-anchor="middle" class="l" fill="#8b949e">Repositories</text></g>
 </svg>`;
 }
 
