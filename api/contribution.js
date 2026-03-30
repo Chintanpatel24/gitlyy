@@ -1,124 +1,91 @@
 /**
- * Vercel serverless function: Contribution Numbers Card
- * GET /api/contribution?username=xxx&theme=dark&hide_border=true&layout=grid
+ * Contribution Numbers Card
+ * GET /api/contribution?username=xxx&hide_border=true&layout=compact
  *
- * GitHub data is cached for 40 minutes to avoid rate limiting.
+ * Auto-refreshes every 30 minutes.
  */
 
 const { fetchContributionData } = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
-const {
-  generateContributionSVG,
-  generateContributionSummarySVG,
-} = require("../src/svg-contribution");
-const { getCache, setCache } = require("../src/cache");
+const { generateContributionSVG, generateContributionSummarySVG } = require("../src/svg-contribution");
+const { getCache, setCache, clearCache } = require("../src/cache");
 
-const CACHE_TTL = 40 * 60 * 1000; // 40 minutes in milliseconds
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 module.exports = async (req, res) => {
-  // Set CORS and content headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
   res.setHeader("Content-Type", "image/svg+xml");
-  // CDN caches for 40 minutes (2400s), allows stale for 10 min while revalidating
-  res.setHeader("Cache-Control", "public, max-age=2400, s-maxage=2400, stale-while-revalidate=600");
+  res.setHeader("Cache-Control", "public, max-age=1800, s-maxage=1800, stale-while-revalidate=600");
 
-  const {
-    username,
-    theme,
-    hide_border,
-    layout,
-    bg_color,
-    title_color,
-    text_color,
-    border_color,
-    title,
-    width,
-  } = req.query;
+  const { username, theme, hide_border, layout, bg_color, title_color, text_color, border_color, title, width, refresh } = req.query;
 
   if (!username) {
-    res.status(400).send(generateErrorSVG("Missing 'username' parameter"));
+    res.status(400).send(errorSVG("Missing username"));
     return;
   }
 
   try {
-    // Check cache for GitHub data
-    const cacheKey = `contrib:${username}`;
+    const cacheKey = `contrib:${username.toLowerCase()}`;
+
+    // Force refresh if requested
+    if (refresh === "true") {
+      clearCache(cacheKey);
+    }
+
     let contributionData = getCache(cacheKey);
 
     if (!contributionData) {
-      // Cache miss - fetch real data from GitHub contribution page
-      contributionData = await fetchContributionData(username);
-
-      // Store in cache for 40 minutes
-      setCache(cacheKey, contributionData, CACHE_TTL);
+      try {
+        contributionData = await fetchContributionData(username);
+        setCache(cacheKey, contributionData, CACHE_TTL);
+      } catch (fetchErr) {
+        console.error("Contribution fetch error:", fetchErr.message);
+        res.status(200).send(errorSVG(`Could not fetch data for ${username}`));
+        return;
+      }
     }
 
     const { totalContributions, days } = contributionData;
 
     // Calculate streaks
-    const sortedDays = [...days].sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
-    );
     let currentStreak = 0;
     let longestStreak = 0;
     let tempStreak = 0;
 
+    const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
     for (let i = sortedDays.length - 1; i >= 0; i--) {
-      if (sortedDays[i].count > 0) {
-        currentStreak++;
-      } else {
-        break;
-      }
+      if (sortedDays[i].count > 0) currentStreak++;
+      else break;
     }
-
     for (const day of sortedDays) {
-      if (day.count > 0) {
-        tempStreak++;
-        longestStreak = Math.max(longestStreak, tempStreak);
-      } else {
-        tempStreak = 0;
-      }
+      if (day.count > 0) { tempStreak++; longestStreak = Math.max(longestStreak, tempStreak); }
+      else tempStreak = 0;
     }
 
-    // Build theme colors (not cached - uses request params)
     let colors = getTheme(theme);
-    colors = applyColorOverrides(colors, {
-      bg_color,
-      title_color,
-      text_color,
-      border_color,
-    });
+    colors = applyColorOverrides(colors, { bg_color, title_color, text_color, border_color });
 
-    const options = {
-      username,
-      days,
-      totalContributions,
-      currentStreak,
-      longestStreak,
-      colors,
-      hideBorder: hide_border === "true",
-      title,
-      cardWidth: parseInt(width) || null,
-    };
-
-    let svg;
-    if (layout === "compact") {
-      svg = generateContributionSummarySVG(options);
-    } else {
-      svg = generateContributionSVG(options);
-    }
+    const svg = layout === "compact"
+      ? generateContributionSummarySVG({
+          username, totalContributions, currentStreak, longestStreak, colors,
+          hideBorder: hide_border === "true",
+        })
+      : generateContributionSVG({
+          username, days, totalContributions, colors,
+          hideBorder: hide_border === "true", title,
+        });
 
     res.status(200).send(svg);
   } catch (error) {
     console.error("Contribution Error:", error.message);
-    res.status(500).send(generateErrorSVG("Failed to fetch contribution data"));
+    res.status(200).send(errorSVG("Failed to load contribution data"));
   }
 };
 
-function generateErrorSVG(message) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="380" height="100" viewBox="0 0 380 100">
-    <rect x="0.5" y="0.5" width="379" height="99" fill="#0d1117" rx="4.5" stroke="#30363d" stroke-width="1"/>
-    <text x="190" y="55" text-anchor="middle" font-family="'Segoe UI', Ubuntu, sans-serif" font-size="14" fill="#f85149">${message}</text>
+function errorSVG(msg) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="380" height="90" viewBox="0 0 380 90">
+    <rect width="380" height="90" fill="#0d1117" rx="8"/>
+    <text x="190" y="48" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" fill="#f85149">${msg}</text>
   </svg>`;
 }

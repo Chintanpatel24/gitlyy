@@ -65,6 +65,27 @@ Compact:
 
 ---
 
+## Auto-Refresh
+
+Cards automatically refresh every **30 minutes**. No manual action needed.
+
+- Data cached server-side for 30 min
+- CDN caches for 30 min
+- Stale content served for 10 extra min while refreshing in background
+- Each user's data cached separately (no conflicts)
+
+---
+
+## Force Refresh
+
+Add `&refresh=true` to force immediate data refresh:
+
+```
+https://gitlyy.vercel.app/api/pr-stats?username=YOUR_USERNAME&refresh=true
+```
+
+---
+
 ## Themes
 
 Add `&theme=NAME`:
@@ -94,14 +115,16 @@ Add `&theme=NAME`:
 | `bg_color` | Background hex | `010409` |
 | `title_color` | Title color hex | `58a6ff` |
 | `text_color` | Text color hex | `e6edf3` |
-| `max_langs` | Max languages shown | `15` |
+| `max_langs` | Max languages (lang card) | `15` |
+| `refresh` | Force refresh data | `true` |
 
 ---
 
 ## How It Works
 
 - Anyone can use `https://gitlyy.vercel.app` - no setup
-- Each user cached separately for 40 minutes
+- Each user cached separately for 30 minutes
+- Auto-refreshes when cache expires
 - No auth required
 - Unlimited users simultaneously
 

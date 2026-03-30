@@ -1,68 +1,75 @@
 /**
- * Vercel serverless function: Language Usage Card
+ * Language Usage Card
  * GET /api/languages?username=xxx&hide_border=true&layout=compact
  *
- * GitHub data cached for 40 minutes.
+ * Auto-refreshes every 30 minutes.
  */
 
 const { fetchUserLanguages } = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generateLanguageSVG, generateLanguageCompactSVG } = require("../src/svg-language");
-const { getCache, setCache } = require("../src/cache");
+const { getCache, setCache, clearCache } = require("../src/cache");
 
-const CACHE_TTL = 40 * 60 * 1000;
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
   res.setHeader("Content-Type", "image/svg+xml");
-  res.setHeader("Cache-Control", "public, max-age=2400, s-maxage=2400, stale-while-revalidate=600");
+  res.setHeader("Cache-Control", "public, max-age=1800, s-maxage=1800, stale-while-revalidate=600");
 
-  const { username, theme, hide_border, layout, max_langs, bg_color, title_color, text_color, border_color } = req.query;
+  const { username, theme, hide_border, layout, max_langs, bg_color, title_color, text_color, border_color, refresh } = req.query;
 
   if (!username) {
-    res.status(400).send(generateErrorSVG("Missing 'username' parameter"));
+    res.status(400).send(errorSVG("Missing username"));
     return;
   }
 
   try {
-    const cacheKey = `langs:${username}`;
+    const cacheKey = `langs:${username.toLowerCase()}`;
+
+    // Force refresh if requested
+    if (refresh === "true") {
+      clearCache(cacheKey);
+    }
+
     let langData = getCache(cacheKey);
 
     if (!langData) {
-      langData = await fetchUserLanguages(username);
-      setCache(cacheKey, langData, CACHE_TTL);
+      try {
+        langData = await fetchUserLanguages(username);
+        setCache(cacheKey, langData, CACHE_TTL);
+      } catch (fetchErr) {
+        console.error("Language fetch error:", fetchErr.message);
+        res.status(200).send(errorSVG(`Could not fetch languages for ${username}`));
+        return;
+      }
     }
 
     let colors = getTheme(theme);
     colors = applyColorOverrides(colors, { bg_color, title_color, text_color, border_color });
 
-    const options = {
-      username,
-      languages: langData.languages,
-      totalBytes: langData.totalBytes,
-      colors,
-      hideBorder: hide_border === "true",
-      maxLangs: parseInt(max_langs) || 12,
-    };
-
-    let svg;
-    if (layout === "compact") {
-      svg = generateLanguageCompactSVG(options);
-    } else {
-      svg = generateLanguageSVG(options);
-    }
+    const svg = layout === "compact"
+      ? generateLanguageCompactSVG({
+          username, languages: langData.languages, colors,
+          hideBorder: hide_border === "true",
+        })
+      : generateLanguageSVG({
+          username, languages: langData.languages, totalBytes: langData.totalBytes, colors,
+          hideBorder: hide_border === "true",
+          maxLangs: parseInt(max_langs) || 12,
+        });
 
     res.status(200).send(svg);
   } catch (error) {
     console.error("Language Error:", error.message);
-    res.status(500).send(generateErrorSVG("Failed to fetch language data"));
+    res.status(200).send(errorSVG("Failed to load language data"));
   }
 };
 
-function generateErrorSVG(message) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="380" height="100" viewBox="0 0 380 100">
-    <rect x="0" y="0" width="380" height="100" fill="#0d1117" rx="8" stroke="#30363d" stroke-width="1"/>
-    <text x="190" y="55" text-anchor="middle" font-family="'Segoe UI', Ubuntu, sans-serif" font-size="14" fill="#f85149">${message}</text>
+function errorSVG(msg) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="380" height="90" viewBox="0 0 380 90">
+    <rect width="380" height="90" fill="#0d1117" rx="8"/>
+    <text x="190" y="48" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" fill="#f85149">${msg}</text>
   </svg>`;
 }
