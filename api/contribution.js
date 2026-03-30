@@ -5,10 +5,7 @@
  * GitHub data is cached for 40 minutes to avoid rate limiting.
  */
 
-const {
-  fetchContributionData,
-  fetchContributionDataFallback,
-} = require("../src/github");
+const { fetchContributionData } = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const {
   generateContributionSVG,
@@ -50,12 +47,8 @@ module.exports = async (req, res) => {
     let contributionData = getCache(cacheKey);
 
     if (!contributionData) {
-      // Cache miss - fetch from GitHub API
-      try {
-        contributionData = await fetchContributionData(username);
-      } catch {
-        contributionData = await fetchContributionDataFallback(username);
-      }
+      // Cache miss - fetch real data from GitHub contribution page
+      contributionData = await fetchContributionData(username);
 
       // Store in cache for 40 minutes
       setCache(cacheKey, contributionData, CACHE_TTL);

@@ -8,281 +8,334 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      background: #0d1117;
-      color: #c9d1d9;
+      background: #010409;
+      color: #e6edf3;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px;
     }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+    /* Status badge */
     .status {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: #0e4429;
-      color: #39d353;
+      background: rgba(46, 160, 67, 0.1);
+      border: 1px solid rgba(46, 160, 67, 0.3);
+      color: #3fb950;
       padding: 6px 16px;
       border-radius: 20px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .status-dot {
       width: 8px;
       height: 8px;
-      background: #39d353;
+      background: #3fb950;
       border-radius: 50%;
       animation: pulse 2s infinite;
     }
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.4); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(63, 185, 80, 0); }
     }
     h1 {
-      color: #58a6ff;
-      font-size: 42px;
+      color: #f0f6fc;
+      font-size: 40px;
+      font-weight: 700;
       margin-bottom: 8px;
+      letter-spacing: -0.5px;
     }
     .subtitle {
       color: #8b949e;
-      font-size: 18px;
+      font-size: 17px;
+      margin-bottom: 48px;
+      line-height: 1.5;
+    }
+    /* Card preview sections */
+    .section {
       margin-bottom: 40px;
     }
-    .cards-section {
-      width: 100%;
-      max-width: 700px;
-      margin-bottom: 40px;
-    }
-    .card-label {
+    .section-label {
       color: #8b949e;
-      font-size: 13px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
+      font-weight: 600;
       margin-bottom: 12px;
     }
-    .card-preview {
-      background: #161b22;
+    .card-frame {
+      background: #0d1117;
       border: 1px solid #30363d;
       border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 24px;
+      padding: 24px;
       display: flex;
       justify-content: center;
+      align-items: center;
       overflow-x: auto;
     }
-    .card-preview img {
+    .card-frame img {
       max-width: 100%;
       height: auto;
+      display: block;
     }
-    .code-block {
+    .card-frame.error {
+      color: #f85149;
+      font-size: 13px;
+      padding: 40px;
+      text-align: center;
+    }
+    /* Code blocks */
+    .code-section {
       background: #161b22;
       border: 1px solid #30363d;
       border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 16px;
-      overflow-x: auto;
+      padding: 28px;
+      margin-top: 40px;
     }
-    .code-block code {
-      color: #c9d1d9;
-      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-      font-size: 13px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-break: break-all;
+    .code-title {
+      color: #f0f6fc;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .code-group {
+      margin-bottom: 20px;
     }
     .code-label {
       color: #8b949e;
       font-size: 12px;
-      margin-bottom: 8px;
       font-weight: 600;
-    }
-    .section-title {
-      color: #58a6ff;
-      font-size: 20px;
-      margin-bottom: 16px;
-      margin-top: 20px;
-    }
-    .info {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      padding: 20px;
-      max-width: 700px;
-      width: 100%;
-      margin-top: 20px;
-    }
-    .info p {
-      color: #8b949e;
-      font-size: 14px;
-      line-height: 1.6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin-bottom: 8px;
     }
-    .info a {
-      color: #58a6ff;
-      text-decoration: none;
+    .code-block {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 6px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      position: relative;
     }
-    .info a:hover {
-      text-decoration: underline;
+    .code-block code {
+      color: #e6edf3;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
     }
+    .code-block .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .code-block .copy-btn:hover {
+      background: #30363d;
+      color: #e6edf3;
+    }
+    /* Params table */
     .params-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 12px;
-    }
-    .params-table th, .params-table td {
-      text-align: left;
-      padding: 8px 12px;
-      border-bottom: 1px solid #21262d;
-      font-size: 13px;
+      margin-top: 16px;
     }
     .params-table th {
+      text-align: left;
+      padding: 8px 12px;
       color: #8b949e;
-      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #21262d;
     }
     .params-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #21262d;
+      font-size: 13px;
       color: #c9d1d9;
     }
     .params-table code {
       background: #1f2937;
-      padding: 2px 6px;
+      padding: 2px 8px;
       border-radius: 4px;
       font-size: 12px;
       color: #58a6ff;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+    }
+    /* Theme pills */
+    .themes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .theme-pill {
+      background: #21262d;
+      border: 1px solid #30363d;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      color: #8b949e;
+      font-family: 'SFMono-Regular', Consolas, monospace;
     }
     footer {
-      margin-top: 40px;
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #21262d;
       color: #484f58;
-      font-size: 13px;
+      font-size: 12px;
+      text-align: center;
+    }
+    footer a {
+      color: #58a6ff;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
+  <div class="container">
 
-  <div class="status">
-    <span class="status-dot"></span>
-    Gitly is live
+    <div class="status">
+      <span class="status-dot"></span>
+      Gitly is live
+    </div>
+
+    <h1>Gitly</h1>
+    <p class="subtitle">Custom GitHub stats cards for your README.<br>Embeddable SVGs with real contribution data. No auth required.</p>
+
+    <!-- PR Stats - Compact -->
+    <div class="section">
+      <div class="section-label">Pull Request Stats &mdash; Compact</div>
+      <div class="card-frame" id="pr-compact">
+        <img src="/api/pr-stats?username=torvalds&layout=compact&hide_border=true" alt="PR Stats Compact"
+             onerror="this.parentElement.classList.add('error');this.parentElement.innerHTML='Card loading... username may not have public PRs'"/>
+      </div>
+    </div>
+
+    <!-- PR Stats - Full -->
+    <div class="section">
+      <div class="section-label">Pull Request Stats &mdash; Full</div>
+      <div class="card-frame" id="pr-full">
+        <img src="/api/pr-stats?username=torvalds&hide_border=true" alt="PR Stats Full"
+             onerror="this.parentElement.classList.add('error');this.parentElement.innerHTML='Card loading...'"/>
+      </div>
+    </div>
+
+    <!-- Contribution - Grid -->
+    <div class="section">
+      <div class="section-label">Contribution Numbers &mdash; Grid</div>
+      <div class="card-frame" id="contrib-grid">
+        <img src="/api/contribution?username=torvalds&hide_border=true" alt="Contribution Grid"
+             onerror="this.parentElement.classList.add('error');this.parentElement.innerHTML='Card loading...'"/>
+      </div>
+    </div>
+
+    <!-- Contribution - Compact -->
+    <div class="section">
+      <div class="section-label">Contribution Numbers &mdash; Compact</div>
+      <div class="card-frame" id="contrib-compact">
+        <img src="/api/contribution?username=torvalds&layout=compact&hide_border=true" alt="Contribution Compact"
+             onerror="this.parentElement.classList.add('error');this.parentElement.innerHTML='Card loading...'"/>
+      </div>
+    </div>
+
+    <!-- Usage -->
+    <div class="code-section">
+      <div class="code-title">How to Use</div>
+
+      <div class="code-group">
+        <div class="code-label">PR Stats Card</div>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <code>&lt;img src="https://gitlyy.vercel.app/api/pr-stats?username=YOUR_USERNAME&amp;hide_border=true"/&gt;</code>
+        </div>
+      </div>
+
+      <div class="code-group">
+        <div class="code-label">Contribution Numbers Card</div>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <code>&lt;img src="https://gitlyy.vercel.app/api/contribution?username=YOUR_USERNAME&amp;hide_border=true"/&gt;</code>
+        </div>
+      </div>
+
+      <div class="code-group">
+        <div class="code-label">Markdown</div>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <code>![PR Stats](https://gitlyy.vercel.app/api/pr-stats?username=YOUR_USERNAME&amp;layout=compact&amp;hide_border=true)
+
+![Contributions](https://gitlyy.vercel.app/api/contribution?username=YOUR_USERNAME&amp;hide_border=true)</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parameters -->
+    <div class="code-section">
+      <div class="code-title">Parameters</div>
+      <table class="params-table">
+        <thead>
+          <tr><th>Param</th><th>Description</th><th>Example</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>username</code></td><td>GitHub username (required)</td><td><code>torvalds</code></td></tr>
+          <tr><td><code>theme</code></td><td>Color theme</td><td><code>dark</code></td></tr>
+          <tr><td><code>hide_border</code></td><td>Hide card border</td><td><code>true</code></td></tr>
+          <tr><td><code>layout</code></td><td>Card layout</td><td><code>compact</code></td></tr>
+          <tr><td><code>bg_color</code></td><td>Background color (hex)</td><td><code>010409</code></td></tr>
+          <tr><td><code>title_color</code></td><td>Title color (hex)</td><td><code>58a6ff</code></td></tr>
+          <tr><td><code>text_color</code></td><td>Text color (hex)</td><td><code>e6edf3</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Themes -->
+    <div class="code-section">
+      <div class="code-title">Themes</div>
+      <div class="themes">
+        <span class="theme-pill">default</span>
+        <span class="theme-pill">dark</span>
+        <span class="theme-pill">synthwave</span>
+        <span class="theme-pill">radical</span>
+        <span class="theme-pill">tokyonight</span>
+        <span class="theme-pill">dracula</span>
+        <span class="theme-pill">gruvbox</span>
+        <span class="theme-pill">monokai</span>
+        <span class="theme-pill">nord</span>
+        <span class="theme-pill">solarized_dark</span>
+        <span class="theme-pill">solarized_light</span>
+        <span class="theme-pill">catppuccin</span>
+        <span class="theme-pill">github_dark</span>
+        <span class="theme-pill">highcontrast</span>
+      </div>
+    </div>
+
+    <footer>
+      Data cached every 40 minutes &bull; No auth required &bull; Real GitHub contribution data
+    </footer>
+
   </div>
 
-  <h1>Gitly</h1>
-  <p class="subtitle">Custom GitHub stats cards for your README</p>
-
-  <!-- PR Stats Card Preview -->
-  <div class="cards-section">
-    <div class="card-label">Pull Request Stats Card (Compact)</div>
-    <div class="card-preview">
-      <img src="/api/pr-stats?username=torvalds&layout=compact&theme=dark&hide_border=true" alt="PR Stats Card" onerror="this.parentElement.innerHTML='<span style=color:#f85149>Card failed to load. Try: /api/pr-stats?username=YOUR_USERNAME</span>'"/>
-    </div>
-
-    <div class="card-label">Pull Request Stats Card (Full)</div>
-    <div class="card-preview">
-      <img src="/api/pr-stats?username=torvalds&theme=dark&hide_border=true" alt="PR Stats Full Card" onerror="this.parentElement.innerHTML='<span style=color:#f85149>Card failed to load.</span>'"/>
-    </div>
-
-    <div class="card-label">Contribution Numbers Card (Grid)</div>
-    <div class="card-preview">
-      <img src="/api/contribution?username=torvalds&theme=github_dark&hide_border=true" alt="Contribution Card" onerror="this.parentElement.innerHTML='<span style=color:#f85149>Card failed to load. Try: /api/contribution?username=YOUR_USERNAME</span>'"/>
-    </div>
-
-    <div class="card-label">Contribution Numbers Card (Compact)</div>
-    <div class="card-preview">
-      <img src="/api/contribution?username=torvalds&layout=compact&theme=dark&hide_border=true" alt="Contribution Compact Card" onerror="this.parentElement.innerHTML='<span style=color:#f85149>Card failed to load.</span>'"/>
-    </div>
-  </div>
-
-  <!-- Usage -->
-  <div class="info">
-    <div class="section-title">How to Use</div>
-
-    <div class="code-label">PR Stats Card</div>
-    <div class="code-block">
-      <code>&lt;img src="https://gitlyy.vercel.app/api/pr-stats?username=YOUR_USERNAME&theme=dark&hide_border=true"/&gt;</code>
-    </div>
-
-    <div class="code-label">Contribution Numbers Card</div>
-    <div class="code-block">
-      <code>&lt;img src="https://gitlyy.vercel.app/api/contribution?username=YOUR_USERNAME&theme=dark&hide_border=true"/&gt;</code>
-    </div>
-
-    <div class="code-label">Paste in your README.md</div>
-    <div class="code-block">
-      <code>![My PR Stats](https://gitlyy.vercel.app/api/pr-stats?username=YOUR_USERNAME&layout=compact&hide_border=true)
-
-![My Contributions](https://gitlyy.vercel.app/api/contribution?username=YOUR_USERNAME&theme=github_dark&hide_border=true)</code>
-    </div>
-  </div>
-
-  <!-- Parameters -->
-  <div class="info">
-    <div class="section-title">Parameters</div>
-    <table class="params-table">
-      <tr>
-        <th>Parameter</th>
-        <th>Description</th>
-        <th>Example</th>
-      </tr>
-      <tr>
-        <td><code>username</code></td>
-        <td>GitHub username (required)</td>
-        <td><code>torvalds</code></td>
-      </tr>
-      <tr>
-        <td><code>theme</code></td>
-        <td>Color theme</td>
-        <td><code>dark</code> <code>synthwave</code> <code>dracula</code></td>
-      </tr>
-      <tr>
-        <td><code>hide_border</code></td>
-        <td>Hide card border</td>
-        <td><code>true</code> <code>false</code></td>
-      </tr>
-      <tr>
-        <td><code>layout</code></td>
-        <td>Card layout</td>
-        <td><code>compact</code></td>
-      </tr>
-      <tr>
-        <td><code>bg_color</code></td>
-        <td>Custom background (hex)</td>
-        <td><code>070d0d</code></td>
-      </tr>
-      <tr>
-        <td><code>title_color</code></td>
-        <td>Custom title color (hex)</td>
-        <td><code>orange</code></td>
-      </tr>
-      <tr>
-        <td><code>text_color</code></td>
-        <td>Custom text color (hex)</td>
-        <td><code>white</code></td>
-      </tr>
-    </table>
-  </div>
-
-  <!-- Themes -->
-  <div class="info">
-    <div class="section-title">Themes</div>
-    <p>
-      <code>default</code>
-      <code>dark</code>
-      <code>synthwave</code>
-      <code>radical</code>
-      <code>tokyonight</code>
-      <code>dracula</code>
-      <code>gruvbox</code>
-      <code>monokai</code>
-      <code>nord</code>
-      <code>solarized_dark</code>
-      <code>solarized_light</code>
-      <code>catppuccin</code>
-      <code>github_dark</code>
-      <code>highcontrast</code>
-    </p>
-  </div>
-
-  <footer>
-    Gitly &mdash; Data cached every 40 minutes &mdash; No auth required
-  </footer>
-
+  <script>
+    function copyCode(btn) {
+      const code = btn.parentElement.querySelector('code').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      });
+    }
+  </script>
 </body>
 </html>

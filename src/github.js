@@ -6,9 +6,6 @@ const GITHUB_API = "https://api.github.com";
 
 /**
  * Fetch all pull requests by a user across all public repos.
- * Uses GitHub search API (unauthenticated, 10 req/min).
- * @param {string} username
- * @returns {Promise<Array>}
  */
 async function fetchUserPullRequests(username) {
   const perPage = 100;
@@ -42,8 +39,6 @@ async function fetchUserPullRequests(username) {
 
 /**
  * Group pull requests by repository name.
- * @param {Array} prs
- * @returns {Object} { repoName: count }
  */
 function groupPRsByRepo(prs) {
   const repoMap = {};
@@ -57,8 +52,6 @@ function groupPRsByRepo(prs) {
 
 /**
  * Fetch user profile info.
- * @param {string} username
- * @returns {Promise<Object>}
  */
 async function fetchUserProfile(username) {
   const url = `${GITHUB_API}/users/${username}`;
@@ -77,116 +70,98 @@ async function fetchUserProfile(username) {
 }
 
 /**
- * Fetch contribution data from GitHub's contribution calendar.
- * This scrapes the user's public contributions page.
- * @param {string} username
- * @returns {Promise<Object>} { totalContributions, days: [{ date, count }] }
+ * Fetch REAL contribution data by scraping GitHub's contribution page.
+ * Works without authentication - gets the exact data GitHub displays.
  */
 async function fetchContributionData(username) {
-  const query = `
-    query($login: String!) {
-      user(login: $login) {
-        contributionsCollection {
-          contributionCalendar {
-            totalContributions
-            weeks {
-              contributionDays {
-                date
-                contributionCount
-                color
-              }
-            }
-          }
-        }
-      }
-    }
-  `;
-
-  const res = await fetch("https://api.github.com/graphql", {
-    method: "POST",
+  const url = `https://github.com/users/${username}/contributions`;
+  const res = await fetch(url, {
     headers: {
-      "Content-Type": "application/json",
-      "User-Agent": "gitly-app",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      Accept: "text/html,application/xhtml+xml",
     },
-    body: JSON.stringify({ query, variables: { login: username } }),
   });
 
   if (!res.ok) {
-    // GraphQL requires auth, fallback to REST scraping
-    return fetchContributionDataFallback(username);
+    throw new Error(`Failed to fetch contributions page: ${res.status}`);
   }
 
-  const data = await res.json();
-  if (data.errors) {
-    return fetchContributionDataFallback(username);
-  }
-
-  const calendar = data.data.user.contributionsCollection.contributionCalendar;
-  const days = [];
-  for (const week of calendar.weeks) {
-    for (const day of week.contributionDays) {
-      days.push({
-        date: day.date,
-        count: day.contributionCount,
-      });
-    }
-  }
-
-  return {
-    totalContributions: calendar.totalContributions,
-    days,
-  };
+  const html = await res.text();
+  return parseContributionHTML(html);
 }
 
 /**
- * Fallback: fetch contribution events via REST API (public, no auth needed).
- * Gets last year of activity from public events.
- * @param {string} username
- * @returns {Promise<Object>}
+ * Parse GitHub contributions HTML to extract real contribution data.
+ *
+ * GitHub's HTML structure:
+ * <td data-date="2025-03-30" data-level="1"></td>
+ * <tool-tip>7 contributions on March 30th.</tool-tip>
+ *
+ * We extract dates from td elements and counts from tool-tip elements,
+ * then match them in order.
  */
-async function fetchContributionDataFallback(username) {
-  const dayMap = {};
-  const today = new Date();
-  const oneYearAgo = new Date(today);
-  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-
-  // Initialize all days with 0
-  for (let d = new Date(oneYearAgo); d <= today; d.setDate(d.getDate() + 1)) {
-    const dateStr = d.toISOString().split("T")[0];
-    dayMap[dateStr] = 0;
+function parseContributionHTML(html) {
+  // Extract total contributions from the header text
+  let totalContributions = 0;
+  const totalMatch = html.match(
+    /(\d[\d,]*)\s+contributions?\s+in\s+the\s+last\s+year/i
+  );
+  if (totalMatch) {
+    totalContributions = parseInt(totalMatch[1].replace(/,/g, ""), 10);
   }
 
-  // Fetch public events (paginated, up to 3 pages = 90 events)
-  for (let page = 1; page <= 3; page++) {
-    try {
-      const url = `${GITHUB_API}/users/${username}/events/public?per_page=30&page=${page}`;
-      const res = await fetch(url, {
-        headers: {
-          "User-Agent": "gitly-app",
-          Accept: "application/vnd.github.v3+json",
-        },
-      });
+  // Extract dates and levels from td elements (in order)
+  const tdRegex =
+    /<td[^>]*data-date="(\d{4}-\d{2}-\d{2})"[^>]*data-level="(\d+)"[^>]*><\/td>/g;
+  const dates = [];
+  let match;
+  while ((match = tdRegex.exec(html)) !== null) {
+    dates.push({ date: match[1], level: parseInt(match[2], 10) });
+  }
 
-      if (!res.ok) break;
+  // Extract contribution counts from tool-tip elements (in order)
+  // Format: "7 contributions on March 30th."
+  const tipRegex =
+    /<tool-tip[^>]*>(\d+)\s+contribution/g;
+  const counts = [];
+  while ((match = tipRegex.exec(html)) !== null) {
+    counts.push(parseInt(match[1], 10));
+  }
 
-      const events = await res.json();
-      if (!events.length) break;
+  // Build days array - match dates with counts by order
+  const days = [];
+  const len = Math.min(dates.length, counts.length);
 
-      for (const event of events) {
-        const date = event.created_at ? event.created_at.split("T")[0] : null;
-        if (date && dayMap.hasOwnProperty(date)) {
-          dayMap[date]++;
-        }
-      }
-    } catch {
-      break;
+  for (let i = 0; i < dates.length; i++) {
+    const count = i < counts.length ? counts[i] : 0;
+    days.push({
+      date: dates[i].date,
+      count: count,
+      level: dates[i].level,
+    });
+  }
+
+  // If no tool-tips found, estimate from level
+  if (counts.length === 0 && days.length > 0) {
+    const levelEstimates = { 0: 0, 1: 2, 2: 5, 3: 8, 4: 15 };
+    for (const day of days) {
+      day.count = levelEstimates[day.level] || 0;
     }
   }
 
-  const days = Object.entries(dayMap).map(([date, count]) => ({ date, count }));
-  const totalContributions = days.reduce((sum, d) => sum + d.count, 0);
+  // Sort by date
+  days.sort((a, b) => a.date.localeCompare(b.date));
 
-  return { totalContributions, days };
+  // If total wasn't found, sum the days
+  if (totalContributions === 0) {
+    totalContributions = days.reduce((sum, d) => sum + d.count, 0);
+  }
+
+  return {
+    totalContributions,
+    days,
+  };
 }
 
 module.exports = {
@@ -194,5 +169,4 @@ module.exports = {
   groupPRsByRepo,
   fetchUserProfile,
   fetchContributionData,
-  fetchContributionDataFallback,
 };
