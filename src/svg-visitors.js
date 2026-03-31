@@ -20,7 +20,7 @@ function generateVisitorsSVG(options) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${cardWidth}" height="${cardHeight}" viewBox="0 0 ${cardWidth} ${cardHeight}">
   <style>
     .header{font:600 14px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-    .count{font:700 42px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+    .count{font:700 56px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
     .label{font:400 12px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
   </style>
   
@@ -46,7 +46,7 @@ function generateVisitorsSVG(options) {
   </g>
   
   <!-- Visitor count -->
-  <text x="${cardWidth / 2}" y="80" text-anchor="middle" class="count" fill="#${accentColor}">${count.toLocaleString()}</text>
+  <text x="${cardWidth / 2}" y="88" text-anchor="middle" class="count" fill="#${accentColor}">${count.toLocaleString()}</text>
   
   <!-- Divider -->
   <line x1="${P}" y1="${cardHeight - 20}" x2="${cardWidth - P}" y2="${cardHeight - 20}" stroke="#30363d" stroke-width=".5"/>

@@ -42,11 +42,11 @@ function generateContributionSVG(options) {
 
   const maxCount = Math.max(...days.map((d) => d.count), 1);
 
-  const cellSize = 11;
-  const cellGap = 3;
+  const cellSize = 16;
+  const cellGap = 4;
   const cellStep = cellSize + cellGap;
-  const padX = 16;
-  const padY = 16;
+  const padX = 20;
+  const padY = 20;
   const headerHeight = 54;
 
   const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
@@ -87,10 +87,10 @@ function generateContributionSVG(options) {
 
     cells += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" rx="2" fill="#${color}"><title>${sortedDays[i].date}: ${sortedDays[i].count}</title></rect>`;
 
-    const fs = sortedDays[i].count > 99 ? 5.5 : sortedDays[i].count > 9 ? 6.5 : 7.2;
+    const fs = sortedDays[i].count > 99 ? 8 : sortedDays[i].count > 9 ? 9.5 : 10.5;
     const tc = sortedDays[i].count === 0 ? "8b949e" : sortedDays[i].count / maxCount > 0.5 ? "0d1117" : "e6edf3";
     const op = sortedDays[i].count === 0 ? ".55" : "1";
-    cells += `<text x="${x + cellSize / 2}" y="${y + cellSize / 2 + 2}" text-anchor="middle" font-family="monospace" font-size="${fs}" font-weight="700" fill="#${tc}" opacity="${op}" pointer-events="none">${sortedDays[i].count}</text>`;
+    cells += `<text x="${x + cellSize / 2}" y="${y + cellSize / 2 + 2.5}" text-anchor="middle" font-family="monospace" font-size="${fs}" font-weight="700" fill="#${tc}" opacity="${op}" pointer-events="none">${sortedDays[i].count}</text>`;
   }
 
   // Month labels across the top, similar to GitHub.
@@ -114,20 +114,20 @@ function generateContributionSVG(options) {
     { row: 5, label: "Fri" },
   ]
     .map(({ row, label }) => {
-      const y = gridStartY + row * cellStep + cellSize / 2 + 3;
-      return `<text x="${gridStartX - 6}" y="${y}" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="8" fill="#8b949e">${label}</text>`;
+      const y = gridStartY + row * cellStep + cellSize / 2 + 4;
+      return `<text x="${gridStartX - 8}" y="${y}" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="10" fill="#8b949e">${label}</text>`;
     })
     .join("");
 
   // Legend
   const legendX = gridStartX;
-  const legendY = gridStartY + gridHeight + 18;
+  const legendY = gridStartY + gridHeight + 24;
   const legColors = ["161b22", "0e4429", "006d32", "26a641", "39d353"];
-  let legend = `<text x="${legendX}" y="${legendY}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="9" fill="#8b949e">Less</text>`;
+  let legend = `<text x="${legendX}" y="${legendY}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="10" fill="#8b949e">Less</text>`;
   legColors.forEach((c, i) => {
-    legend += `<rect x="${legendX + 28 + i * (cellSize + 2)}" y="${legendY - 8}" width="${cellSize - 1}" height="${cellSize - 1}" rx="2" fill="#${c}"/>`;
+    legend += `<rect x="${legendX + 32 + i * (cellSize + 2)}" y="${legendY - 9}" width="${cellSize - 1}" height="${cellSize - 1}" rx="2" fill="#${c}"/>`;
   });
-  legend += `<text x="${legendX + 28 + 5 * (cellSize + 2) + 4}" y="${legendY}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="9" fill="#8b949e">More</text>`;
+  legend += `<text x="${legendX + 32 + 5 * (cellSize + 2) + 6}" y="${legendY}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="10" fill="#8b949e">More</text>`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${cardWidth}" height="${cardHeight}" viewBox="0 0 ${cardWidth} ${cardHeight}">
 <style>.t{font:600 14px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.b{font:500 11px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}</style>

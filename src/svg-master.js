@@ -48,8 +48,8 @@ function generateMasterCardSVG(options) {
     const x = pad + i * (statW + statGap);
     statCards += `<g transform="translate(${x},76)">
       <rect width="${statW}" height="${statH}" rx="10" fill="#${s.fill}" opacity="${s.opacity}"/>
-      <text x="${statW / 2}" y="36" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="23" font-weight="700" fill="#${s.fill}">${s.value}</text>
-      <text x="${statW / 2}" y="60" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="11" fill="#8b949e">${s.label}</text>
+      <text x="${statW / 2}" y="44" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="32" font-weight="700" fill="#${s.fill}">${s.value}</text>
+      <text x="${statW / 2}" y="68" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="11" fill="#8b949e">${s.label}</text>
     </g>`;
   });
 
@@ -57,31 +57,31 @@ function generateMasterCardSVG(options) {
   const maxRepoCount = Math.max(1, ...topRepos.map((r) => r.count || 0));
   let repoRows = "";
   topRepos.forEach((repo, i) => {
-    const y = 228 + i * 30;
+    const y = 228 + i * 32;
     const name = String(repo.name || "unknown");
     const shortName = name.length > 28 ? `${name.slice(0, 25)}...` : name;
     const pct = (repo.count || 0) / maxRepoCount;
     const barW = Math.round(230 * pct);
     repoRows += `<g transform="translate(${pad + 14},${y})">
-      <text x="0" y="14" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="11" fill="#${textColor}">${escapeXml(shortName)}</text>
-      <rect x="245" y="6" width="230" height="9" rx="4" fill="#30363d"/>
-      <rect x="245" y="6" width="${barW}" height="9" rx="4" fill="#${accentColor}"/>
-      <text x="485" y="14" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="11" font-weight="600" fill="#${accentColor}">${repo.count || 0}</text>
+      <text x="0" y="16" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" fill="#${textColor}">${escapeXml(shortName)}</text>
+      <rect x="245" y="3" width="230" height="14" rx="6" fill="#30363d"/>
+      <rect x="245" y="3" width="${barW}" height="14" rx="6" fill="#${accentColor}"/>
+      <text x="485" y="17" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#${accentColor}">${repo.count || 0}</text>
     </g>`;
   });
 
   const topLangs = languages.slice(0, 6);
   let langRows = "";
   topLangs.forEach((lang, i) => {
-    const y = 228 + i * 26;
+    const y = 228 + i * 32;
     const langName = String(lang.name || "Unknown");
     const langPct = Number(lang.percentage || 0);
     const barW = Math.round(180 * Math.max(0, Math.min(100, langPct)) / 100);
     langRows += `<g transform="translate(${pad + 558},${y})">
-      <text x="0" y="13" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="11" fill="#${textColor}">${escapeXml(langName)}</text>
-      <rect x="120" y="5" width="180" height="8" rx="4" fill="#30363d"/>
-      <rect x="120" y="5" width="${barW}" height="8" rx="4" fill="#${accentColor}"/>
-      <text x="308" y="13" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="10" fill="#8b949e">${langPct.toFixed(1)}%</text>
+      <text x="0" y="16" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" fill="#${textColor}">${escapeXml(langName)}</text>
+      <rect x="120" y="3" width="180" height="14" rx="6" fill="#30363d"/>
+      <rect x="120" y="3" width="${barW}" height="14" rx="6" fill="#${accentColor}"/>
+      <text x="308" y="17" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#${accentColor}">${langPct.toFixed(1)}%</text>
     </g>`;
   });
 
