@@ -5,7 +5,12 @@
   "main": "index.js",
   "scripts": {
     "dev": "vercel dev",
-    "start": "vercel dev"
+    "start": "vercel dev",
+    "build": "echo \"No build step required for Vercel serverless functions\"",
+    "deploy": "vercel --prod"
+  },
+  "engines": {
+    "node": "20.x"
   },
   "keywords": [
     "github",

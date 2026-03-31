@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
   "routes": [
     { "src": "/api/pr-stats", "dest": "/api/pr-stats.js" },
     { "src": "/api/contribution", "dest": "/api/contribution.js" },
