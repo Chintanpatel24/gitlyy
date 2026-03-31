@@ -9,6 +9,9 @@
     "build": "echo \"No build step required for Vercel serverless functions\"",
     "deploy": "vercel --prod"
   },
+  "engines": {
+    "node": ">=18"
+  },
   "keywords": [
     "github",
     "stats",
