@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="https://gitlyy.vercel.app/api/master?username=torvalds&hide_border=true&width=1000" alt="Gitly Master Card" width="100%"/>
-</p>
-
 <h1 align="center">Gitly</h1>
 
 <p align="center">
