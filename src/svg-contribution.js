@@ -67,8 +67,8 @@ function generateContributionSVG(options) {
 
   const maxCount = Math.max(...days.map((d) => d.count), 1);
 
-  const baseCellSize = 24;
-  const maxCellSize = getCellSizeForCount(150, baseCellSize);
+  const baseCellSize = 28;
+  const maxCellSize = baseCellSize;
   const cellGap = 6;
   const cellStep = maxCellSize + cellGap;
   const padX = 24;
@@ -109,9 +109,9 @@ function generateContributionSVG(options) {
     const slotX = gridStartX + col * cellStep;
     const slotY = gridStartY + row * cellStep;
     const color = getContributionColorForDay(sortedDays[i], maxCount);
-    const dynamicCellSize = getCellSizeForCount(sortedDays[i].count, baseCellSize);
-    const x = slotX + (maxCellSize - dynamicCellSize) / 2;
-    const y = slotY + (maxCellSize - dynamicCellSize) / 2;
+    const dynamicCellSize = baseCellSize;
+    const x = slotX;
+    const y = slotY;
 
     cells += `<rect x="${x}" y="${y}" width="${dynamicCellSize}" height="${dynamicCellSize}" rx="3" fill="#${color}"><title>${sortedDays[i].date}: ${sortedDays[i].count}</title></rect>`;
 
