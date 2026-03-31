@@ -13,6 +13,61 @@ const { getCache, setCache, clearCache } = require("../src/cache");
 
 const CACHE_TTL = 30 * 60 * 1000;
 
+async function fetchUserIssuesCount(username) {
+  const url = `https://api.github.com/search/issues?q=author:${encodeURIComponent(username)}+type:issue&per_page=1`;
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "gitly-app",
+      Accept: "application/vnd.github.v3+json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`GitHub issues API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  return data.total_count || 0;
+}
+
+async function fetchUserTotalStars(username) {
+  let page = 1;
+  let totalStars = 0;
+
+  while (true) {
+    const url = `https://api.github.com/users/${encodeURIComponent(username)}/repos?type=owner&per_page=100&page=${page}`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "gitly-app",
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`GitHub repos API error: ${res.status} ${res.statusText}`);
+    }
+
+    const repos = await res.json();
+    if (!Array.isArray(repos) || repos.length === 0) {
+      break;
+    }
+
+    for (const repo of repos) {
+      if (!repo.fork) {
+        totalStars += repo.stargazers_count || 0;
+      }
+    }
+
+    if (repos.length < 100) {
+      break;
+    }
+
+    page++;
+  }
+
+  return totalStars;
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
@@ -37,10 +92,12 @@ module.exports = async (req, res) => {
 
     if (!data) {
       try {
-        const [prs, profile, contributionData] = await Promise.all([
+        const [prs, profile, contributionData, totalIssues, totalStars] = await Promise.all([
           fetchUserPullRequests(username),
           fetchUserProfile(username).catch(() => ({ public_repos: 0, public_gists: 0 })),
           fetchContributionData(username),
+          fetchUserIssuesCount(username),
+          fetchUserTotalStars(username),
         ]);
 
         // Count repos contributed to from PR data
@@ -51,14 +108,11 @@ module.exports = async (req, res) => {
           }
         });
 
-        // Estimate stars (API doesn't give total stars easily without auth)
-        const totalStars = (profile.public_repos || 0) * 3;
-
         data = {
           totalStars,
           totalCommits: contributionData.totalContributions || 0,
           totalPRs: prs.length,
-          totalIssues: Math.round(prs.length * 0.4),
+          totalIssues,
           contributedTo: reposContributed.size || profile.public_repos || 0,
         };
 
@@ -79,6 +133,7 @@ module.exports = async (req, res) => {
       totalPRs: data.totalPRs,
       totalIssues: data.totalIssues,
       contributedTo: data.contributedTo,
+      commitYear: new Date().getUTCFullYear(),
       colors,
       hideBorder: hide_border === "true",
     });

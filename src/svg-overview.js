@@ -1,6 +1,6 @@
 /**
  * Overview Card SVG generation
- * Shows stats: Total Stars, 2026 Commits, Total PRs, Total Issues, Contributed to.
+ * Shows stats: Total Stars, yearly Commits, Total PRs, Total Issues, Contributed to.
  */
 
 function escapeXml(s) {
@@ -14,6 +14,7 @@ function generateOverviewSVG(options) {
     totalPRs = 0,
     totalIssues = 0,
     contributedTo = 0,
+    commitYear = new Date().getUTCFullYear(),
     colors,
     hideBorder,
   } = options;
@@ -25,7 +26,7 @@ function generateOverviewSVG(options) {
 
   const stats = [
     { label: "Total Stars", value: totalStars, color: "eab308" },
-    { label: "2026 Commits", value: totalCommits, color: "39d353" },
+    { label: `${commitYear} Commits`, value: totalCommits, color: "39d353" },
     { label: "Total PRs", value: totalPRs, color: accentColor },
     { label: "Total Issues", value: totalIssues, color: "f85149" },
     { label: "Contributed to", value: contributedTo, color: "8b5cf6" },
