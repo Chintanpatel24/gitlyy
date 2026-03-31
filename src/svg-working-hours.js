@@ -92,7 +92,6 @@ function generateWorkingHoursSVG(options) {
   <text x="${cardWidth - P}" y="${cardHeight - 2}" text-anchor="end" class="date" fill="#8b949e">${nowDateStr}</text>
 </svg>`;
 }
-}
 
 function escapeXml(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");

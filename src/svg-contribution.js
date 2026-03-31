@@ -30,10 +30,10 @@ function getContributionColorForDay(day, maxCount) {
 }
 
 function getCellSizeForCount(count, baseCellSize) {
-  if (count >= 150) return baseCellSize + 8;
-  if (count >= 100) return baseCellSize + 6;
-  if (count >= 80) return baseCellSize + 4;
-  if (count >= 50) return baseCellSize + 2;
+  if (count >= 150) return baseCellSize + 16;
+  if (count >= 100) return baseCellSize + 12;
+  if (count >= 80) return baseCellSize + 8;
+  if (count >= 50) return baseCellSize + 4;
   return baseCellSize;
 }
 
@@ -68,7 +68,7 @@ function generateContributionSVG(options) {
   const maxCount = Math.max(...days.map((d) => d.count), 1);
 
   const baseCellSize = 16;
-  const maxCellSize = baseCellSize + 8;
+  const maxCellSize = getCellSizeForCount(150, baseCellSize);
   const cellGap = 4;
   const cellStep = maxCellSize + cellGap;
   const padX = 20;
