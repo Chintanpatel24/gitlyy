@@ -9,7 +9,7 @@
 const { fetchUserProfile, fetchContributionData } = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generateWorkingHoursSVG } = require("../src/svg-working-hours");
-const { getCache, setCache } = require("../src/cache");
+const { getCache, setCache, clearCache } = require("../src/cache");
 
 const CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours
 
@@ -31,8 +31,7 @@ module.exports = async (req, res) => {
 
     // Force refresh if requested
     if (refresh === "true") {
-      const { getCache: getCacheFunc, setCache: setCacheFunc } = require("../src/cache");
-      // Clear cache by setting expired data
+      clearCache(cacheKey);
     }
 
     let cachedData = getCache(cacheKey);

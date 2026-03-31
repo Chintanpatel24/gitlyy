@@ -57,7 +57,19 @@ Donut graph (new):
 <img src="https://gitlyy.vercel.app/api/languages?username=YOUR_USERNAME&layout=donut&hide_border=true"/>
 ```
 
-### 4. Master Card (NEW!) - True All-in-One Dashboard
+### 4. Working Hours - Total Coding Time
+
+<img src="https://gitlyy.vercel.app/api/working-hours?username=torvalds&hide_border=true" alt="Working Hours" height="140"/>
+
+Displays estimated total coding hours worked on GitHub since account creation. Auto-refreshes every 2 hours based on new activity.
+
+Calculation: `Total Contributions × 1.5 hours/commit` (accounts for thinking, coding, testing, debugging, reviewing)
+
+```html
+<img src="https://gitlyy.vercel.app/api/working-hours?username=YOUR_USERNAME&hide_border=true"/>
+```
+
+### 5. Master Card (NEW!) - True All-in-One Dashboard
 
 <img src="https://gitlyy.vercel.app/api/master?username=torvalds&hide_border=true" alt="Master Stats Card" width="100%"/>
 
@@ -89,7 +101,7 @@ If GitHub README shows an old image, force refresh once:
 <img src="https://gitlyy.vercel.app/api/master?username=YOUR_USERNAME&hide_border=true&refresh=true"/>
 ```
 
-### 5. Visitors Counter (NEW!)
+### 6. Visitors Counter (NEW!)
 
 <img src="https://gitlyy.vercel.app/api/visitors?username=torvalds&hide_border=true" alt="Visitors Counter" height="120"/>
 
@@ -126,6 +138,9 @@ Track profile views with a live visitor counter:
 <!-- Visitor Counter -->
 <img src="https://gitlyy.vercel.app/api/visitors?username=YOUR_USERNAME&hide_border=true"/>
 
+<!-- Total Coding Hours -->
+<img src="https://gitlyy.vercel.app/api/working-hours?username=YOUR_USERNAME&hide_border=true"/>
+
 <!-- Master Dashboard -->
 <img src="https://gitlyy.vercel.app/api/master?username=YOUR_USERNAME&hide_border=true"/>
 
@@ -143,11 +158,14 @@ Track profile views with a live visitor counter:
 
 ## Auto-Refresh
 
-Cards automatically refresh every **30 minutes**. No manual action needed.
+Cards automatically refresh based on their data type. No manual action needed.
 
-- Data cached server-side for 30 min
-- CDN caches for 30 min
-- Stale content served for 10 extra min while refreshing in background
+- **Contributions, PR Stats, Languages**: Refresh every **30 minutes**
+- **Working Hours**: Refresh every **2 hours** (updates as new activity is detected)
+- **Visitor Counter**: Real-time updates
+- Data cached server-side
+- CDN caches data
+- Stale content served while refreshing in background
 - Each user's data cached separately (no conflicts)
 
 ---
@@ -157,7 +175,9 @@ Cards automatically refresh every **30 minutes**. No manual action needed.
 Add `&refresh=true` to force immediate data refresh:
 
 ```
+https://gitlyy.vercel.app/api/working-hours?username=YOUR_USERNAME&refresh=true
 https://gitlyy.vercel.app/api/pr-stats?username=YOUR_USERNAME&refresh=true
+https://gitlyy.vercel.app/api/contribution?username=YOUR_USERNAME&refresh=true
 ```
 
 ---
@@ -203,6 +223,42 @@ Add `&theme=NAME`:
 - Auto-refreshes when cache expires
 - No auth required
 - Unlimited users simultaneously
+
+---
+
+## API Endpoints
+
+All endpoints return SVG images that auto-refresh. Replace `YOUR_USERNAME` with any GitHub username.
+
+### Available Endpoints
+
+| Endpoint | Purpose | Refresh Rate |
+|----------|---------|--------------|
+| `/api/pr-stats` | Pull request statistics | 30 min |
+| `/api/contribution` | Contribution graph | 30 min |
+| `/api/languages` | Language distribution | 30 min |
+| `/api/working-hours` | Total coding hours | 2 hours |
+| `/api/visitors` | Profile visitor counter | Real-time |
+| `/api/master` | All-in-one dashboard | 30 min |
+
+### Test Links
+
+Try these live links to verify everything is working:
+
+- **PR Stats**: https://gitlyy.vercel.app/api/pr-stats?username=torvalds&hide_border=true
+- **Contributions**: https://gitlyy.vercel.app/api/contribution?username=torvalds&hide_border=true
+- **Languages**: https://gitlyy.vercel.app/api/languages?username=torvalds&hide_border=true
+- **Working Hours**: https://gitlyy.vercel.app/api/working-hours?username=torvalds&hide_border=true
+- **Visitors**: https://gitlyy.vercel.app/api/visitors?username=torvalds&hide_border=true
+- **Master Card**: https://gitlyy.vercel.app/api/master?username=torvalds&hide_border=true&width=1000
+
+All endpoints support:
+- `&theme=NAME` - Apply color theme
+- `&hide_border=true` - Remove border
+- `&refresh=true` - Force data refresh
+- `&bg_color=HEX` - Custom background
+- `&title_color=HEX` - Custom title color
+- `&text_color=HEX` - Custom text color
 
 ---
 
