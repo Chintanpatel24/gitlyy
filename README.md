@@ -326,6 +326,12 @@ https://gitlyy.vercel.app/api/profile?username=YOUR_USERNAME&refresh=true
 
 ---
 
-## License
+## Star History
 
-MIT
+<a href="https://www.star-history.com/?repos=Chintanpatel24%2Fgitlyy&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Chintanpatel24/gitlyy&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Chintanpatel24/gitlyy&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Chintanpatel24/gitlyy&type=date&legend=top-left" />
+ </picture>
+</a>
