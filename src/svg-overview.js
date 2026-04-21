@@ -1,6 +1,6 @@
 /**
  * Overview Card SVG generation
- * Shows stats: Total Stars, yearly Commits, Total PRs, Total Issues, Contributed to.
+ * Shows stats: Total Stars, last-12-month Commits, Total PRs, Total Issues, Contributed to, Lines Changed.
  */
 
 function escapeXml(s) {
@@ -14,22 +14,23 @@ function generateOverviewSVG(options) {
     totalPRs = 0,
     totalIssues = 0,
     contributedTo = 0,
-    commitYear = new Date().getUTCFullYear(),
+    linesChanged = 0,
     colors,
     hideBorder,
   } = options;
 
-  const W = 460, H = 260, P = 24;
+  const W = 460, H = 296, P = 24;
   const hba = hideBorder ? `rx="8"` : `rx="8" stroke="#30363d" stroke-width="1"`;
 
   const accentColor = (colors && colors.accent_color) || "58a6ff";
 
   const stats = [
     { label: "Total Stars", value: totalStars, color: "eab308" },
-    { label: `${commitYear} Commits`, value: totalCommits, color: "39d353" },
+    { label: "Last 12 Months Commits", value: totalCommits, color: "39d353" },
     { label: "Total PRs", value: totalPRs, color: accentColor },
     { label: "Total Issues", value: totalIssues, color: "f85149" },
     { label: "Contributed to", value: contributedTo, color: "8b5cf6" },
+    { label: "Lines Changed", value: linesChanged, color: "fb923c" },
   ];
 
   const rowH = 36;

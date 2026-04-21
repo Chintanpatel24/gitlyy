@@ -163,12 +163,24 @@ Where:
 
 ### 8. Overview Card
 
-- Shows total stats: Stars, Commits, PRs, Issues, Contributed to.
+- Shows total stats: Stars, Last 12 Months Commits, PRs, Issues, Contributed to, Lines Changed.
 
 <img src="images/14.png">
 
 ```html
 <img src="https://gitlyy.vercel.app/api/overview?username=YOUR_USERNAME&hide_border=true"/>
+```
+
+Use `lines_scope=all` to calculate lines changed from all fetched PRs (slower):
+
+```html
+<img src="https://gitlyy.vercel.app/api/overview?username=YOUR_USERNAME&lines_scope=all&hide_border=true"/>
+```
+
+Use `lines_scope=recent` with `max_prs` (default: 30, max: 200) for faster calculation:
+
+```html
+<img src="https://gitlyy.vercel.app/api/overview?username=YOUR_USERNAME&lines_scope=recent&max_prs=50&hide_border=true"/>
 ```
 
 ---
@@ -234,6 +246,8 @@ All endpoints support these query parameters:
 | `border_color` | Border color (hex) | `30363d` |
 | `width` | Card width (supported by profile, PR stats, commits) | `520` |
 | `max_langs` | Max languages shown | `15` |
+| `lines_scope` | Overview lines-changed source (`recent` or `all`) | `recent` |
+| `max_prs` | PR limit for overview when `lines_scope=recent` (1-200, default 30) | `50` |
 | `refresh` | Force data refresh | `true` |
 
 ---

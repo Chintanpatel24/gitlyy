@@ -2,7 +2,7 @@
  * Overview Card
  * GET /api/overview?username=xxx&hide_border=true
  *
- * Shows total stats: Stars, Commits, PRs, Issues, Contributed to.
+ * Shows total stats: Stars, Commits, PRs, Issues, Contributed to, Lines Changed.
  * Auto-refreshes every 30 minutes.
  */
 
@@ -68,13 +68,63 @@ async function fetchUserTotalStars(username) {
   return totalStars;
 }
 
+async function fetchRecentPRLinesChanged(prs, maxPRs = 30) {
+  const targetPRs = prs
+    .filter((pr) => pr && pr.pull_request && pr.pull_request.url)
+    .slice(0, maxPRs);
+
+  if (targetPRs.length === 0) {
+    return 0;
+  }
+
+  const headers = {
+    "User-Agent": "gitly-app",
+    Accept: "application/vnd.github.v3+json",
+  };
+
+  const concurrency = 6;
+  let totalChanged = 0;
+
+  for (let i = 0; i < targetPRs.length; i += concurrency) {
+    const batch = targetPRs.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map(async (pr) => {
+        try {
+          const res = await fetch(pr.pull_request.url, { headers });
+          if (!res.ok) return 0;
+          const data = await res.json();
+          return (data.additions || 0) + (data.deletions || 0);
+        } catch {
+          return 0;
+        }
+      })
+    );
+
+    totalChanged += results.reduce((sum, v) => sum + v, 0);
+  }
+
+  return totalChanged;
+}
+
+function normalizeLinesScope(value) {
+  return value === "all" ? "all" : "recent";
+}
+
+function parseMaxPRs(value, defaultValue = 30, hardLimit = 200) {
+  const parsed = parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return defaultValue;
+  }
+  return Math.min(parsed, hardLimit);
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
   res.setHeader("Content-Type", "image/svg+xml");
   res.setHeader("Cache-Control", "public, max-age=1800, s-maxage=1800, stale-while-revalidate=600");
 
-  const { username, theme, hide_border, bg_color, title_color, text_color, border_color, refresh } = req.query;
+  const { username, theme, hide_border, bg_color, title_color, text_color, border_color, refresh, lines_scope, max_prs } = req.query;
 
   if (!username) {
     res.status(400).send(errorSVG("Missing username"));
@@ -82,7 +132,11 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const cacheKey = `overview:${username.toLowerCase()}`;
+    const scope = normalizeLinesScope(lines_scope);
+    const maxPRs = scope === "all" ? 0 : parseMaxPRs(max_prs, 30, 200);
+    const cacheKey = scope === "all"
+      ? `overview:${username.toLowerCase()}:lines_scope=all`
+      : `overview:${username.toLowerCase()}:lines_scope=recent:max_prs=${maxPRs}`;
 
     if (refresh === "true") {
       clearCache(cacheKey);
@@ -100,6 +154,8 @@ module.exports = async (req, res) => {
           fetchUserTotalStars(username),
         ]);
 
+        const linesChanged = await fetchRecentPRLinesChanged(prs, scope === "all" ? prs.length : maxPRs);
+
         // Count repos contributed to from PR data
         const reposContributed = new Set();
         prs.forEach(pr => {
@@ -114,6 +170,7 @@ module.exports = async (req, res) => {
           totalPRs: prs.length,
           totalIssues,
           contributedTo: reposContributed.size || profile.public_repos || 0,
+          linesChanged,
         };
 
         setCache(cacheKey, data, CACHE_TTL);
@@ -133,7 +190,7 @@ module.exports = async (req, res) => {
       totalPRs: data.totalPRs,
       totalIssues: data.totalIssues,
       contributedTo: data.contributedTo,
-      commitYear: new Date().getUTCFullYear(),
+      linesChanged: data.linesChanged,
       colors,
       hideBorder: hide_border === "true",
     });
