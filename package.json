@@ -7,9 +7,6 @@
     "dev": "vercel dev",
     "start": "vercel dev",
   },
-  "engines": {
-    "node": ">=18"
-  },
   "keywords": [
     "github",
     "stats",
@@ -22,5 +19,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
 }
