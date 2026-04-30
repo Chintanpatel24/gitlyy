@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "vercel dev",
-    "start": "vercel dev",
+    "start": "vercel dev"
   },
   "keywords": [
     "github",
