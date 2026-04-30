@@ -38,10 +38,12 @@ module.exports = async (req, res) => {
 
     if (!data) {
       try {
-        const [prs, profile, openPRCount] = await Promise.all([
+        const [prs, profile, openPRCount, closedPRCount, mergedPRCount] = await Promise.all([
           fetchUserPullRequests(username),
           fetchUserProfile(username).catch(() => ({ name: username, login: username })),
           fetchOpenPullRequests(username),
+          fetchClosedPullRequests(username),
+          fetchMergedPullRequests(username),
         ]);
 
         const repoMap = groupPRsByRepo(prs);
@@ -50,6 +52,8 @@ module.exports = async (req, res) => {
           repoMap,
           totalPRs: prs.length,
           openPRs: openPRCount,
+          closedPRs: closedPRCount,
+          mergedPRs: mergedPRCount,
           repoCount: Object.keys(repoMap).length,
           profileName: profile.name || profile.login || username,
         };
@@ -70,6 +74,8 @@ module.exports = async (req, res) => {
       ? generatePRSummarySVG({
           username: data.profileName,
           totalPRs: data.totalPRs,
+          mergedPRs: data.mergedPRs,
+          closedPRs: data.closedPRs,
           openPRs: data.openPRs,
           repoCount: data.repoCount,
           colors,
@@ -80,6 +86,8 @@ module.exports = async (req, res) => {
           username: data.profileName,
           repoMap: data.repoMap,
           totalPRs: data.totalPRs,
+          mergedPRs: data.mergedPRs,
+          closedPRs: data.closedPRs,
           openPRs: data.openPRs,
           colors,
           hideBorder: hide_border === "true",
