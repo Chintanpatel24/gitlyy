@@ -55,12 +55,17 @@ module.exports = async (req, res) => {
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
         console.error("Issues fetch error:", fetchErr.message);
-        // Return error card
-        res.status(200).send(errorSVG(`Could not fetch issues for ${username}`));
-        return;
+         // Fallback to zeros so card still renders
+        data = {
+          totalIssues: 0,
+          openIssues: 0,
+          closedIssues: 0,
+          profileName: username,
+        };
+        setCache(cacheKey, data, CACHE_TTL);
       }
     }
-
+    
     let colors = getTheme(theme);
     colors = applyColorOverrides(colors, { bg_color, title_color, text_color, border_color });
 
