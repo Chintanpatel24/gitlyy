@@ -37,7 +37,10 @@ module.exports = async (req, res) => {
 
     if (!data) {
       try {
-        const contributionData = await fetchContributionData(username);
+        const [contributionData, totalCommits] = await Promise.all([
+          fetchContributionData(username),
+          fetchTotalCommitCount(username),
+        ]);
         const { days, totalContributions } = contributionData;
 
         const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
@@ -54,7 +57,7 @@ module.exports = async (req, res) => {
           else tempStreak = 0;
         }
 
-        data = { currentStreak, longestStreak, totalContributions };
+        data = { currentStreak, longestStreak, totalContributions, totalCommits };
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
         console.error("Streak fetch error:", fetchErr.message);
@@ -71,6 +74,7 @@ module.exports = async (req, res) => {
       currentStreak: data.currentStreak,
       longestStreak: data.longestStreak,
       totalContributions: data.totalContributions,
+      totalCommits: data.totalCommits,
       colors,
       hideBorder: hide_border === "true",
     });
