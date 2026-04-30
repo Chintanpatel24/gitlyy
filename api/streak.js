@@ -6,7 +6,7 @@
  * Auto-refreshes every 30 minutes.
  */
 
-const { fetchContributionData } = require("../src/github");
+const { fetchContributionData, fetchTotalCommitCount } = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generateStreakSVG } = require("../src/svg-streak");
 const { getCache, setCache, clearCache } = require("../src/cache");
