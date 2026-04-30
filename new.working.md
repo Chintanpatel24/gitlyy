@@ -14,16 +14,3 @@ Embed example:
 ```html
 <img src="https://gitlyy.vercel.app/api/issues?username=YOUR_USERNAME&hide_border=true"/>
 ```
-
-
-Direct SVG links (examples):
-
-- Full card: https://gitlyy.vercel.app/api/pr-stats?username=YOUR_USERNAME&hide_border=true
-- Compact summary: https://gitlyy.vercel.app/api/pr-stats?username=YOUR_USERNAME&layout=compact&hide_border=true
-
-Embed examples:
-
-```html
-<img src="https://gitlyy.vercel.app/api/pr-stats?username=YOUR_USERNAME&hide_border=true"/>
-<img src="https://gitlyy.vercel.app/api/pr-stats?username=YOUR_USERNAME&layout=compact&hide_border=true"/>
-```
