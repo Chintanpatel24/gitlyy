@@ -58,6 +58,46 @@ async function fetchOpenPullRequests(username) {
 }
 
 /**
+ * Fetch closed (merged + rejected) pull requests by a user across all public repos.
+ */
+async function fetchClosedPullRequests(username) {
+  const url = `${GITHUB_API}/search/issues?q=author:${username}+type:pr+state:closed&per_page=1`;
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "gitly-app",
+      Accept: "application/vnd.github.v3+json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  return data.total_count || 0;
+}
+
+/**
+ * Fetch merged pull requests by a user across all public repos.
+ */
+async function fetchMergedPullRequests(username) {
+  const url = `${GITHUB_API}/search/issues?q=author:${username}+type:pr+is:merged&per_page=1`;
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "gitly-app",
+      Accept: "application/vnd.github.v3+json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  return data.total_count || 0;
+}
+
+/**
  * Group pull requests by repository name.
  */
 function groupPRsByRepo(prs) {
@@ -267,9 +307,33 @@ async function fetchUserCommitTimestamps(username) {
   };
 }
 
+/**
+ * Fetch total commit count by a user across all public repos.
+ */
+async function fetchTotalCommitCount(username) {
+  const url = `${GITHUB_API}/search/commits?q=author:${username}&per_page=1`;
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "gitly-app",
+      Accept: "application/vnd.github.v3+json",
+    },
+  });
+
+  if (!res.ok) {
+    console.warn(`GitHub commits API warning: ${res.status}`);
+    return 0;
+  }
+
+  const data = await res.json();
+  return data.total_count || 0;
+}
+
 module.exports = {
   fetchUserPullRequests,
   fetchOpenPullRequests,
+  fetchClosedPullRequests,
+  fetchMergedPullRequests,
+  fetchTotalCommitCount,
   groupPRsByRepo,
   fetchUserProfile,
   fetchContributionData,
