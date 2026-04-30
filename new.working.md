@@ -59,6 +59,6 @@ Embed example:
 
 **Working examples:**
 - Compact: https://gitlyy.vercel.app/api/pr-stats?username=torvalds&layout=compact&hide_border=true
-- Compact: https://gitlyy.vercel.app/api/pr-stats?username=gvanrossum&layout=compact&hide_border=true
+- Compact: https://gitlyy.vercel.app/api/pr-stats?username=torvalds&layout=compact&hide_border=true
 
 ---
