@@ -5,7 +5,7 @@
  * Auto-refreshes every 30 minutes.
  */
 
-const { fetchUserPullRequests, fetchOpenPullRequests, groupPRsByRepo, fetchUserProfile } = require("../src/github");
+const { fetchUserPullRequests, fetchOpenPullRequests, fetchClosedPullRequests, fetchMergedPullRequests, groupPRsByRepo, fetchUserProfile } = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generatePRCardSVG, generatePRSummarySVG } = require("../src/svg-pr");
 const { parseCardWidth } = require("../src/width");
