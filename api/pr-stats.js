@@ -61,9 +61,17 @@ module.exports = async (req, res) => {
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
         console.error("PR fetch error:", fetchErr.message);
-        // Return error card
-        res.status(200).send(errorSVG(`Could not fetch PRs for ${username}`));
-        return;
+         // Fallback to zeros so card still renders
+        data = {
+          repoMap: {},
+          totalPRs: 0,
+          openPRs: 0,
+          closedPRs: 0,
+          mergedPRs: 0,
+          repoCount: 0,
+          profileName: username,
+        };
+        setCache(cacheKey, data, CACHE_TTL);
       }
     }
 
