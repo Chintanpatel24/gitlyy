@@ -98,6 +98,66 @@ async function fetchMergedPullRequests(username) {
 }
 
 /**
+ * Fetch total issues by a user across all public repos.
+ */
+async function fetchUserIssues(username) {
+  const url = `${GITHUB_API}/search/issues?q=author:${username}+type:issue&per_page=1`;
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "gitly-app",
+      Accept: "application/vnd.github.v3+json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  return data.total_count || 0;
+}
+
+/**
+ * Fetch open issues by a user across all public repos.
+ */
+async function fetchOpenIssues(username) {
+  const url = `${GITHUB_API}/search/issues?q=author:${username}+type:issue+state:open&per_page=1`;
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "gitly-app",
+      Accept: "application/vnd.github.v3+json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  return data.total_count || 0;
+}
+
+/**
+ * Fetch closed issues by a user across all public repos.
+ */
+async function fetchClosedIssues(username) {
+  const url = `${GITHUB_API}/search/issues?q=author:${username}+type:issue+state:closed&per_page=1`;
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "gitly-app",
+      Accept: "application/vnd.github.v3+json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  return data.total_count || 0;
+}
+
+/**
  * Group pull requests by repository name.
  */
 function groupPRsByRepo(prs) {
@@ -333,6 +393,9 @@ module.exports = {
   fetchOpenPullRequests,
   fetchClosedPullRequests,
   fetchMergedPullRequests,
+  fetchUserIssues,
+  fetchOpenIssues,
+  fetchClosedIssues,
   fetchTotalCommitCount,
   groupPRsByRepo,
   fetchUserProfile,
