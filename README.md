@@ -1,6 +1,6 @@
 <div align=center>
 
-![title image](images/gitlyy.png)
+<img width="350" alt="gitlyy" src="https://github.com/user-attachments/assets/1525fea3-d8b2-4625-9b9f-56841b69f47d" />
 
 </div>
 
