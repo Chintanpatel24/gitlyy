@@ -24,7 +24,7 @@ function normalizeLinesScope(value) {
   return value === "all" ? "all" : "recent";
 }
 
-function parseMaxPRs(value, defaultValue = 30, hardLimit = 200) {
+function parseMaxPRs(value, defaultValue = 20, hardLimit = 50) {
   const parsed = parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     return defaultValue;
@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
 
   try {
     const scope = normalizeLinesScope(lines_scope);
-    const maxPRs = scope === "all" ? 0 : parseMaxPRs(max_prs, 30, 200);
+    const maxPRs = scope === "all" ? 50 : parseMaxPRs(max_prs, 20, 50);
     const cacheKey = scope === "all"
       ? `overview:${username.toLowerCase()}:lines_scope=all`
       : `overview:${username.toLowerCase()}:lines_scope=recent:max_prs=${maxPRs}`;
@@ -62,36 +62,41 @@ module.exports = async (req, res) => {
       try {
         const [prs, profile, contributionData, totalIssues, totalStars] = await Promise.all([
           fetchUserPullRequests(username),
-          fetchUserProfile(username).catch(() => ({ public_repos: 0, public_gists: 0 })),
+          fetchUserProfile(username),
           fetchContributionData(username),
           fetchUserIssues(username),
           fetchUserTotalStars(username),
         ]);
 
-        const linesChanged = await fetchRecentPRLinesChanged(prs, scope === "all" ? prs.length : maxPRs);
+        const linesChanged = await fetchRecentPRLinesChanged(prs, maxPRs);
 
-        // Count repos contributed to from PR data
         const reposContributed = new Set();
-        prs.forEach(pr => {
+        (prs || []).forEach(pr => {
           if (pr.repository_url) {
             reposContributed.add(pr.repository_url.split("/repos/")[1]);
           }
         });
 
         data = {
-          totalStars,
-          totalCommits: contributionData.totalContributions || 0,
-          totalPRs: prs.length,
-          totalIssues,
-          contributedTo: reposContributed.size || profile.public_repos || 0,
+          totalStars: totalStars || 0,
+          totalCommits: contributionData?.totalContributions || 0,
+          totalPRs: prs?.length || 0,
+          totalIssues: totalIssues || 0,
+          contributedTo: reposContributed.size || profile?.public_repos || 0,
           linesChanged,
         };
 
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
         console.error("Overview fetch error:", fetchErr.message);
-        res.status(200).send(errorSVG(`Could not fetch data for ${username}`));
-        return;
+        data = {
+          totalStars: 0,
+          totalCommits: 0,
+          totalPRs: 0,
+          totalIssues: 0,
+          contributedTo: 0,
+          linesChanged: 0,
+        };
       }
     }
 

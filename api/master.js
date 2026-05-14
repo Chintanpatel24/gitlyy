@@ -45,14 +45,14 @@ module.exports = async (req, res) => {
       try {
         const [prs, profile, contributionData, langData, totalCommits] = await Promise.all([
           fetchUserPullRequests(username),
-          fetchUserProfile(username).catch(() => ({ public_repos: 0 })),
+          fetchUserProfile(username),
           fetchContributionData(username),
           fetchUserLanguages(username),
           fetchTotalCommitCount(username)
         ]);
 
-        // Calculate streaks
-        const sortedDays = [...contributionData.days].sort((a, b) => a.date.localeCompare(b.date));
+        const days = contributionData?.days || [];
+        const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
         let currentStreak = 0;
         let longestStreak = 0;
         let tempStreak = 0;
@@ -66,9 +66,8 @@ module.exports = async (req, res) => {
           else tempStreak = 0;
         }
 
-        // Top repos by PR count
         const repoMap = {};
-        prs.forEach(pr => {
+        (prs || []).forEach(pr => {
           if (pr.repository_url) {
             const name = pr.repository_url.split("/repos/")[1];
             repoMap[name] = (repoMap[name] || 0) + 1;
@@ -79,14 +78,14 @@ module.exports = async (req, res) => {
           .sort((a, b) => b.count - a.count);
 
         data = {
-          username: profile.login || username,
-          totalPRs: prs.length,
-          openPRs: prs.filter(pr => pr.state === "open").length,
-          repoCount: profile.public_repos || 0,
-          languages: langData.languages,
-          contributions: contributionData.totalContributions,
+          username: profile?.login || username,
+          totalPRs: prs?.length || 0,
+          openPRs: (prs || []).filter(pr => pr.state === "open").length,
+          repoCount: profile?.public_repos || 0,
+          languages: langData?.languages || [],
+          contributions: contributionData?.totalContributions || 0,
           repoList,
-          contributionDays: contributionData.days,
+          contributionDays: days,
           currentStreak,
           longestStreak,
           totalCommits
@@ -95,8 +94,19 @@ module.exports = async (req, res) => {
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
         console.error("Mastercard fetch error:", fetchErr.message);
-        res.status(200).send(errorSVG(`Could not fetch data for ${username}`));
-        return;
+        data = {
+          username: username,
+          totalPRs: 0,
+          openPRs: 0,
+          repoCount: 0,
+          languages: [],
+          contributions: 0,
+          repoList: [],
+          contributionDays: [],
+          currentStreak: 0,
+          longestStreak: 0,
+          totalCommits: 0
+        };
       }
     }
 

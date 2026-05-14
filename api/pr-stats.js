@@ -40,7 +40,7 @@ module.exports = async (req, res) => {
       try {
         const [prs, profile, openPRCount, closedPRCount, mergedPRCount] = await Promise.all([
           fetchUserPullRequests(username),
-          fetchUserProfile(username).catch(() => ({ name: username, login: username })),
+          fetchUserProfile(username),
           fetchOpenPullRequests(username),
           fetchClosedPullRequests(username),
           fetchMergedPullRequests(username),
@@ -50,18 +50,17 @@ module.exports = async (req, res) => {
 
         data = {
           repoMap,
-          totalPRs: prs.length,
-          openPRs: openPRCount,
-          closedPRs: closedPRCount,
-          mergedPRs: mergedPRCount,
+          totalPRs: prs?.length || 0,
+          openPRs: openPRCount || 0,
+          closedPRs: closedPRCount || 0,
+          mergedPRs: mergedPRCount || 0,
           repoCount: Object.keys(repoMap).length,
-          profileName: profile.name || profile.login || username,
+          profileName: profile?.name || profile?.login || username,
         };
 
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
         console.error("PR fetch error:", fetchErr.message);
-         // Fallback to zeros so card still renders
         data = {
           repoMap: {},
           totalPRs: 0,
@@ -71,7 +70,6 @@ module.exports = async (req, res) => {
           repoCount: 0,
           profileName: username,
         };
-        setCache(cacheKey, data, CACHE_TTL);
       }
     }
 

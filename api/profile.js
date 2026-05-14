@@ -39,6 +39,7 @@ module.exports = async (req, res) => {
     if (!data) {
       try {
         const profile = await fetchUserProfile(username);
+        if (!profile) throw new Error("No profile");
         data = {
           username: profile.login || username,
           name: profile.name || profile.login || username,
@@ -52,8 +53,16 @@ module.exports = async (req, res) => {
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
         console.error("Profile fetch error:", fetchErr.message);
-        res.status(200).send(errorSVG(`Could not fetch profile for ${username}`));
-        return;
+        data = {
+          username: username,
+          name: username,
+          bio: "",
+          avatarUrl: "",
+          createdAt: null,
+          publicRepos: 0,
+          followers: 0,
+          following: 0,
+        };
       }
     }
 

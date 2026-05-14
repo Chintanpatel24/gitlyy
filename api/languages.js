@@ -67,11 +67,12 @@ module.exports = async (req, res) => {
         } else {
           langData = await fetchUserLanguages(username);
         }
+
+        if (!langData) throw new Error("No data returned");
         setCache(cacheKey, langData, CACHE_TTL);
       } catch (fetchErr) {
         console.error("Language fetch error:", fetchErr.message);
-        res.status(200).send(errorSVG(`Could not fetch languages for ${username}`));
-        return;
+        langData = { languages: [], totalRepos: 0, totalBytes: 0, totalActivity: 0 };
       }
     }
 
@@ -81,27 +82,27 @@ module.exports = async (req, res) => {
     let svg;
     if (cacheMode === "repos") {
       svg = generateLanguageDonutByReposSVG({
-        languages: langData.languages,
+        languages: langData.languages || [],
         hideBorder: hide_border === "true",
       });
     } else if (cacheMode === "commits") {
       svg = generateLanguageDonutByCommitsSVG({
-        languages: langData.languages,
+        languages: langData.languages || [],
         hideBorder: hide_border === "true",
       });
     } else {
       svg = layout === "compact"
         ? generateLanguageCompactSVG({
-            username, languages: langData.languages, colors,
+            username, languages: langData.languages || [], colors,
             hideBorder: hide_border === "true",
           })
         : layout === "donut"
           ? generateLanguageDonutSVG({
-              username, languages: langData.languages, colors,
+              username, languages: langData.languages || [], colors,
               hideBorder: hide_border === "true",
             })
           : generateLanguageSVG({
-              username, languages: langData.languages, totalBytes: langData.totalBytes, colors,
+              username, languages: langData.languages || [], totalBytes: langData.totalBytes || 0, colors,
               hideBorder: hide_border === "true",
               maxLangs: parseInt(max_langs) || 12,
             });

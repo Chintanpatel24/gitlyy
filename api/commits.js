@@ -42,15 +42,15 @@ module.exports = async (req, res) => {
     if (!contributionData) {
       try {
         contributionData = await fetchContributionData(username);
+        if (!contributionData) throw new Error("No data");
         setCache(cacheKey, contributionData, CACHE_TTL);
       } catch (fetchErr) {
         console.error("Commits fetch error:", fetchErr.message);
-        res.status(200).send(errorSVG(`Could not fetch data for ${username}`));
-        return;
+        contributionData = { totalContributions: 0, days: [] };
       }
     }
 
-    const { totalContributions, days } = contributionData;
+    const { totalContributions = 0, days = [] } = contributionData;
 
     let colors = getTheme(theme);
     colors = applyColorOverrides(colors, { bg_color, title_color, text_color, border_color });

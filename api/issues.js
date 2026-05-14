@@ -42,27 +42,25 @@ module.exports = async (req, res) => {
           fetchUserIssues(username),
           fetchOpenIssues(username),
           fetchClosedIssues(username),
-          fetchUserProfile(username).catch(() => ({ name: username, login: username })),
+          fetchUserProfile(username)
         ]);
 
         data = {
-          totalIssues: totalIssuesCount,
-          openIssues: openIssuesCount,
-          closedIssues: closedIssuesCount,
-          profileName: profile.name || profile.login || username,
+          totalIssues: totalIssuesCount || 0,
+          openIssues: openIssuesCount || 0,
+          closedIssues: closedIssuesCount || 0,
+          profileName: profile?.name || profile?.login || username,
         };
 
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
         console.error("Issues fetch error:", fetchErr.message);
-         // Fallback to zeros so card still renders
         data = {
           totalIssues: 0,
           openIssues: 0,
           closedIssues: 0,
           profileName: username,
         };
-        setCache(cacheKey, data, CACHE_TTL);
       }
     }
     
