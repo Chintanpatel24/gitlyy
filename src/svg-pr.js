@@ -72,9 +72,9 @@ function generatePRSummarySVG(options) {
   <circle cx="${P + 8}" cy="22" r="5" fill="#${colors.accent_color}" opacity=".2"/><circle cx="${P + 8}" cy="22" r="2.5" fill="#${colors.accent_color}"/>
   <text x="${P + 18}" y="26" class="t" fill="#${colors.title_color}">Pull Requests</text>
   <line x1="${P}" y1="42" x2="${cardWidth - P}" y2="42" stroke="#30363d" stroke-width=".5"/>
-  <g transform="translate(${P},52)"><rect width="${sw}" height="78" rx="8" fill="#${colors.accent_color}" opacity=".06"/><text x="${sw / 2}" y="40" text-anchor="middle" class="n" fill="#${colors.accent_color}">${mergedPRs}</text><text x="${sw / 2}" y="58" text-anchor="middle" class="l" fill="#8b949e">Merged</text></g>
-  <g transform="translate(${P + sw + 12},52)"><rect width="${sw}" height="78" rx="8" fill="#${colors.accent_color}" opacity=".04"/><text x="${sw / 2}" y="40" text-anchor="middle" class="n" fill="#${colors.accent_color}">${closedPRs}</text><text x="${sw / 2}" y="58" text-anchor="middle" class="l" fill="#8b949e">Closed</text></g>
-  <g transform="translate(${P + (sw + 12) * 2},52)"><rect width="${sw}" height="78" rx="8" fill="#3fb950" opacity=".04"/><text x="${sw / 2}" y="40" text-anchor="middle" class="n" fill="#3fb950">${openPRs}</text><text x="${sw / 2}" y="58" text-anchor="middle" class="l" fill="#8b949e">Open</text></g>
+  <g transform="translate(${P}, 52)"><rect width="${sw}" height="78" rx="8" fill="#${colors.accent_color}" opacity=".06"/><text x="${sw / 2}" y="40" text-anchor="middle" class="n" fill="#${colors.accent_color}">${mergedPRs}</text><text x="${sw / 2}" y="58" text-anchor="middle" class="l" fill="#8b949e">Merged</text></g>
+  <g transform="translate(${P + sw + 12}, 52)"><rect width="${sw}" height="78" rx="8" fill="#${colors.accent_color}" opacity=".04"/><text x="${sw / 2}" y="40" text-anchor="middle" class="n" fill="#${colors.accent_color}">${totalPRs}</text><text x="${sw / 2}" y="58" text-anchor="middle" class="l" fill="#8b949e">Total PRs</text></g>
+  <g transform="translate(${P + (sw + 12) * 2}, 52)"><rect width="${sw}" height="78" rx="8" fill="#3fb950" opacity=".04"/><text x="${sw / 2}" y="40" text-anchor="middle" class="n" fill="#3fb950">${openPRs}</text><text x="${sw / 2}" y="58" text-anchor="middle" class="l" fill="#8b949e">Open</text></g>
 </svg>`;
 }
 

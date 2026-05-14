@@ -27,7 +27,27 @@
 
 ---
 
-### 2. Contribution Numbers
+### 2. Mastercard (Dashboard)
+
+- A comprehensive dashboard containing all your stats in a single card.
+
+```html
+<img src="https://gitlyy.vercel.app/api/master?username=YOUR_USERNAME&hide_border=true"/>
+```
+
+---
+
+### 3. Issues Card
+
+- Shows counts for **Open**, **Total**, and **Closed** issues.
+
+```html
+<img src="https://gitlyy.vercel.app/api/issues?username=YOUR_USERNAME&hide_border=true"/>
+```
+
+---
+
+### 4. Contribution Numbers
 
  I. GitHub-style contribution heatmap with daily commit counts.
 
@@ -47,7 +67,7 @@
 
 ---
 
-### 3. Language Usage
+### 5. Language Usage
 
  I. Horizontal stacked bar of languages with percentages using GitHub's official colors.
 
@@ -75,7 +95,7 @@
 
 ---
 
-### 4. Streak Card
+### 6. Streak Card
 
 I. Current and longest contribution streaks with fire visual and progress bar.
 
@@ -94,7 +114,7 @@ II. **Compact** (total, current streak, longest streak):
 ```
 ---
 
-### 5. Commits Ranking
+### 7. Commits Ranking
 
  I. PR-style ranked list of days from highest to lowest commit count, with large green square markers and count bars.
 
@@ -121,7 +141,7 @@ II. **Compact** (total, current streak, longest streak):
 
 ---
 
-### 6. Pull Request Stats 
+### 8. Pull Request Stats
 
  I. PR count with per-repository breakdown and progress bars.
 
@@ -141,7 +161,7 @@ II. **Compact** (total, current streak, longest streak):
 
 ---
 
-### 7. Working Hours
+### 9. Working Hours
 
 - Calculates actual coding hours by analyzing commit timestamp gaps.
 
@@ -162,7 +182,7 @@ Where:
 
 ---
 
-### 8. Overview Card
+### 10. Overview Card
 
 - Shows total stats: Stars, Last 12 Months Commits, PRs, Issues, Contributed to, Lines Changed.
 
@@ -220,12 +240,14 @@ Copy any card URL and replace `YOUR_USERNAME` with your GitHub username:
 
 | Endpoint | Description | Layouts | Refresh |
 |----------|-------------|---------|---------|
+| `/api/master` | Mastercard (Dashboard) | - | 30 min |
 | `/api/profile` | User profile info | - | 2 hours |
 | `/api/contribution` | Contribution heatmap | `default`, `compact`, `pulse` | 30 min |
 | `/api/languages` | Language distribution | `default`, `compact`, `donut` | 30 min |
 | `/api/streak` | Streak stats | - | 30 min |
 | `/api/commits` | Commits ranking | `default`, `compact` | 30 min |
 | `/api/pr-stats` | Pull request stats | `default`, `compact` | 30 min |
+| `/api/issues` | Issues stats | - | 30 min |
 | `/api/working-hours` | Estimated coding hours | - | 2 hours |
 | `/api/overview` | Overall stats summary | - | 30 min |
 

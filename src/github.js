@@ -388,23 +388,87 @@ async function fetchTotalCommitCount(username) {
   return data.total_count || 0;
 }
 
-module.exports = {
-  fetchUserPullRequests,
-  fetchOpenPullRequests,
-  fetchClosedPullRequests,
-  fetchMergedPullRequests,
-  fetchUserIssues,
-  fetchOpenIssues,
-  fetchClosedIssues,
-  fetchTotalCommitCount,
-  groupPRsByRepo,
-  fetchUserProfile,
-  fetchContributionData,
-  fetchUserLanguages,
-  fetchUserLanguagesByRepos,
-  fetchUserLanguagesByCommits,
-  fetchUserCommitTimestamps,
-};
+/**
+ * Fetch total stars of a user's repositories.
+ */
+async function fetchUserTotalStars(username) {
+  let page = 1;
+  let totalStars = 0;
+
+  while (true) {
+    const url = `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?type=owner&per_page=100&page=${page}`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "gitly-app",
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`GitHub repos API error: ${res.status} ${res.statusText}`);
+    }
+
+    const repos = await res.json();
+    if (!Array.isArray(repos) || repos.length === 0) {
+      break;
+    }
+
+    for (const repo of repos) {
+      if (!repo.fork) {
+        totalStars += repo.stargazers_count || 0;
+      }
+    }
+
+    if (repos.length < 100) {
+      break;
+    }
+
+    page++;
+  }
+
+  return totalStars;
+}
+
+/**
+ * Fetch lines changed in recent PRs.
+ */
+async function fetchRecentPRLinesChanged(prs, maxPRs = 30) {
+  const targetPRs = prs
+    .filter((pr) => pr && pr.pull_request && pr.pull_request.url)
+    .slice(0, maxPRs);
+
+  if (targetPRs.length === 0) {
+    return 0;
+  }
+
+  const headers = {
+    "User-Agent": "gitly-app",
+    Accept: "application/vnd.github.v3+json",
+  };
+
+  const concurrency = 6;
+  let totalChanged = 0;
+
+  for (let i = 0; i < targetPRs.length; i += concurrency) {
+    const batch = targetPRs.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map(async (pr) => {
+        try {
+          const res = await fetch(pr.pull_request.url, { headers });
+          if (!res.ok) return 0;
+          const data = await res.json();
+          return (data.additions || 0) + (data.deletions || 0);
+        } catch {
+          return 0;
+        }
+      })
+    );
+
+    totalChanged += results.reduce((sum, v) => sum + v, 0);
+  }
+
+  return totalChanged;
+}
 
 /**
  * Fetch language usage across user's public repos.
@@ -605,3 +669,23 @@ async function fetchUserLanguagesByCommits(username) {
 
   return { languages, totalActivity };
 }
+
+module.exports = {
+  fetchUserPullRequests,
+  fetchOpenPullRequests,
+  fetchClosedPullRequests,
+  fetchMergedPullRequests,
+  fetchUserIssues,
+  fetchOpenIssues,
+  fetchClosedIssues,
+  fetchTotalCommitCount,
+  fetchUserTotalStars,
+  fetchRecentPRLinesChanged,
+  groupPRsByRepo,
+  fetchUserProfile,
+  fetchContributionData,
+  fetchUserLanguages,
+  fetchUserLanguagesByRepos,
+  fetchUserLanguagesByCommits,
+  fetchUserCommitTimestamps,
+};
