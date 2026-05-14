@@ -8,7 +8,6 @@
 
 const {
   fetchUserPullRequests,
-  fetchOpenPullRequests,
   fetchContributionData,
   fetchUserProfile,
   fetchUserLanguages,
@@ -111,6 +110,7 @@ module.exports = async (req, res) => {
       repoCount: data.repoCount,
       languages: data.languages,
       contributions: data.contributions,
+      totalCommits: data.totalCommits,
       repoList: data.repoList,
       contributionDays: data.contributionDays,
       currentStreak: data.currentStreak,
