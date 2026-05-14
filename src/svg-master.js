@@ -20,6 +20,7 @@ function generateMasterCardSVG(options) {
     repoCount = 0,
     languages = [],
     contributions = 0,
+    totalCommits = 0,
     repoList = [],
     visitors = 0,
     contributionDays = [],
@@ -72,7 +73,7 @@ function generateMasterCardSVG(options) {
 
   // --- STAT CARDS (6 stats in a row) ---
   const stats = [
-    { label: "Visitors", value: visitors, color: accentColor },
+    { label: "Commits", value: totalCommits.toLocaleString(), color: accentColor },
     { label: "Total PRs", value: totalPRs, color: accentColor },
     { label: "Open PRs", value: openPRs, color: "f85149" },
     { label: "Repos", value: repoCount, color: "1f6feb" },
