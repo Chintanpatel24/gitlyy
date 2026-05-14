@@ -6,105 +6,19 @@
  * Auto-refreshes every 30 minutes.
  */
 
-const { fetchUserPullRequests, fetchContributionData, fetchUserProfile } = require("../src/github");
+const {
+  fetchUserPullRequests,
+  fetchContributionData,
+  fetchUserProfile,
+  fetchUserIssues,
+  fetchUserTotalStars,
+  fetchRecentPRLinesChanged
+} = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generateOverviewSVG } = require("../src/svg-overview");
 const { getCache, setCache, clearCache } = require("../src/cache");
 
 const CACHE_TTL = 30 * 60 * 1000;
-
-async function fetchUserIssuesCount(username) {
-  const url = `https://api.github.com/search/issues?q=author:${encodeURIComponent(username)}+type:issue&per_page=1`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "gitly-app",
-      Accept: "application/vnd.github.v3+json",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`GitHub issues API error: ${res.status} ${res.statusText}`);
-  }
-
-  const data = await res.json();
-  return data.total_count || 0;
-}
-
-async function fetchUserTotalStars(username) {
-  let page = 1;
-  let totalStars = 0;
-
-  while (true) {
-    const url = `https://api.github.com/users/${encodeURIComponent(username)}/repos?type=owner&per_page=100&page=${page}`;
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "gitly-app",
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
-
-    if (!res.ok) {
-      throw new Error(`GitHub repos API error: ${res.status} ${res.statusText}`);
-    }
-
-    const repos = await res.json();
-    if (!Array.isArray(repos) || repos.length === 0) {
-      break;
-    }
-
-    for (const repo of repos) {
-      if (!repo.fork) {
-        totalStars += repo.stargazers_count || 0;
-      }
-    }
-
-    if (repos.length < 100) {
-      break;
-    }
-
-    page++;
-  }
-
-  return totalStars;
-}
-
-async function fetchRecentPRLinesChanged(prs, maxPRs = 30) {
-  const targetPRs = prs
-    .filter((pr) => pr && pr.pull_request && pr.pull_request.url)
-    .slice(0, maxPRs);
-
-  if (targetPRs.length === 0) {
-    return 0;
-  }
-
-  const headers = {
-    "User-Agent": "gitly-app",
-    Accept: "application/vnd.github.v3+json",
-  };
-
-  const concurrency = 6;
-  let totalChanged = 0;
-
-  for (let i = 0; i < targetPRs.length; i += concurrency) {
-    const batch = targetPRs.slice(i, i + concurrency);
-    const results = await Promise.all(
-      batch.map(async (pr) => {
-        try {
-          const res = await fetch(pr.pull_request.url, { headers });
-          if (!res.ok) return 0;
-          const data = await res.json();
-          return (data.additions || 0) + (data.deletions || 0);
-        } catch {
-          return 0;
-        }
-      })
-    );
-
-    totalChanged += results.reduce((sum, v) => sum + v, 0);
-  }
-
-  return totalChanged;
-}
 
 function normalizeLinesScope(value) {
   return value === "all" ? "all" : "recent";
@@ -150,7 +64,7 @@ module.exports = async (req, res) => {
           fetchUserPullRequests(username),
           fetchUserProfile(username).catch(() => ({ public_repos: 0, public_gists: 0 })),
           fetchContributionData(username),
-          fetchUserIssuesCount(username),
+          fetchUserIssues(username),
           fetchUserTotalStars(username),
         ]);
 
