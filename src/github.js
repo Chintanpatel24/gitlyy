@@ -5,6 +5,38 @@
 const GITHUB_API = "https://api.github.com";
 
 /**
+ * Robust fetch wrapper with timeout and better error handling
+ */
+async function safeFetch(url, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        "User-Agent": "gitly-app",
+        Accept: "application/vnd.github.v3+json",
+        ...(options.headers || {}),
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      console.warn(`GitHub API warning: ${res.status} for ${url}`);
+      return null;
+    }
+    return await res.json();
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.error(`Fetch error for ${url}:`, err.message);
+    return null;
+  }
+}
+
+/**
  * Fetch all pull requests by a user across all public repos.
  */
 async function fetchUserPullRequests(username) {
@@ -12,25 +44,13 @@ async function fetchUserPullRequests(username) {
   let page = 1;
   let allPRs = [];
 
-  while (true) {
-    const url = `${GITHUB_API}/search/issues?q=author:${username}+type:pr&per_page=${perPage}&page=${page}`;
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "gitly-app",
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
+  while (page <= 5) {
+    const url = `${GITHUB_API}/search/issues?q=author:${encodeURIComponent(username)}+type:pr&per_page=${perPage}&page=${page}`;
+    const data = await safeFetch(url);
+    if (!data || !data.items || data.items.length === 0) break;
 
-    if (!res.ok) {
-      throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
-    }
-
-    const data = await res.json();
-    allPRs = allPRs.concat(data.items || []);
-
-    if (allPRs.length >= data.total_count || data.items.length < perPage) {
-      break;
-    }
+    allPRs = allPRs.concat(data.items);
+    if (allPRs.length >= data.total_count || data.items.length < perPage) break;
     page++;
   }
 
@@ -38,123 +58,45 @@ async function fetchUserPullRequests(username) {
 }
 
 /**
- * Fetch open pull requests by a user across all public repos.
+ * PR counts
  */
 async function fetchOpenPullRequests(username) {
-  const url = `${GITHUB_API}/search/issues?q=author:${username}+type:pr+state:open&per_page=1`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "gitly-app",
-      Accept: "application/vnd.github.v3+json",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
-  }
-
-  const data = await res.json();
-  return data.total_count || 0;
+  const url = `${GITHUB_API}/search/issues?q=author:${encodeURIComponent(username)}+type:pr+state:open&per_page=1`;
+  const data = await safeFetch(url);
+  return data ? (data.total_count || 0) : 0;
 }
 
-/**
- * Fetch closed (merged + rejected) pull requests by a user across all public repos.
- */
 async function fetchClosedPullRequests(username) {
-  const url = `${GITHUB_API}/search/issues?q=author:${username}+type:pr+state:closed&per_page=1`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "gitly-app",
-      Accept: "application/vnd.github.v3+json",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
-  }
-
-  const data = await res.json();
-  return data.total_count || 0;
+  const url = `${GITHUB_API}/search/issues?q=author:${encodeURIComponent(username)}+type:pr+state:closed&per_page=1`;
+  const data = await safeFetch(url);
+  return data ? (data.total_count || 0) : 0;
 }
 
-/**
- * Fetch merged pull requests by a user across all public repos.
- */
 async function fetchMergedPullRequests(username) {
-  const url = `${GITHUB_API}/search/issues?q=author:${username}+type:pr+is:merged&per_page=1`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "gitly-app",
-      Accept: "application/vnd.github.v3+json",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
-  }
-
-  const data = await res.json();
-  return data.total_count || 0;
+  const url = `${GITHUB_API}/search/issues?q=author:${encodeURIComponent(username)}+type:pr+is:merged&per_page=1`;
+  const data = await safeFetch(url);
+  return data ? (data.total_count || 0) : 0;
 }
 
 /**
- * Fetch total issues by a user across all public repos.
+ * Issue counts
  */
 async function fetchUserIssues(username) {
-  const url = `${GITHUB_API}/search/issues?q=author:${username}+type:issue&per_page=1`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "gitly-app",
-      Accept: "application/vnd.github.v3+json",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
-  }
-
-  const data = await res.json();
-  return data.total_count || 0;
+  const url = `${GITHUB_API}/search/issues?q=author:${encodeURIComponent(username)}+type:issue&per_page=1`;
+  const data = await safeFetch(url);
+  return data ? (data.total_count || 0) : 0;
 }
 
-/**
- * Fetch open issues by a user across all public repos.
- */
 async function fetchOpenIssues(username) {
-  const url = `${GITHUB_API}/search/issues?q=author:${username}+type:issue+state:open&per_page=1`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "gitly-app",
-      Accept: "application/vnd.github.v3+json",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
-  }
-
-  const data = await res.json();
-  return data.total_count || 0;
+  const url = `${GITHUB_API}/search/issues?q=author:${encodeURIComponent(username)}+type:issue+state:open&per_page=1`;
+  const data = await safeFetch(url);
+  return data ? (data.total_count || 0) : 0;
 }
 
-/**
- * Fetch closed issues by a user across all public repos.
- */
 async function fetchClosedIssues(username) {
-  const url = `${GITHUB_API}/search/issues?q=author:${username}+type:issue+state:closed&per_page=1`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "gitly-app",
-      Accept: "application/vnd.github.v3+json",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
-  }
-
-  const data = await res.json();
-  return data.total_count || 0;
+  const url = `${GITHUB_API}/search/issues?q=author:${encodeURIComponent(username)}+type:issue+state:closed&per_page=1`;
+  const data = await safeFetch(url);
+  return data ? (data.total_count || 0) : 0;
 }
 
 /**
@@ -162,6 +104,7 @@ async function fetchClosedIssues(username) {
  */
 function groupPRsByRepo(prs) {
   const repoMap = {};
+  if (!Array.isArray(prs)) return repoMap;
   for (const pr of prs) {
     const repoUrl = pr.repository_url || "";
     const repoName = repoUrl.split("/repos/")[1] || "unknown";
@@ -174,64 +117,43 @@ function groupPRsByRepo(prs) {
  * Fetch user profile info.
  */
 async function fetchUserProfile(username) {
-  const url = `${GITHUB_API}/users/${username}`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "gitly-app",
-      Accept: "application/vnd.github.v3+json",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
-  }
-
-  return res.json();
+  const url = `${GITHUB_API}/users/${encodeURIComponent(username)}`;
+  const data = await safeFetch(url);
+  if (!data) return { login: username, name: username, public_repos: 0, followers: 0, following: 0 };
+  return data;
 }
 
 /**
  * Fetch REAL contribution data by scraping GitHub's contribution page.
- * Works without authentication - gets the exact data GitHub displays.
  */
 async function fetchContributionData(username) {
-  const url = `https://github.com/users/${username}/contributions`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Accept: "text/html,application/xhtml+xml",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch contributions page: ${res.status}`);
+  const url = `https://github.com/users/${encodeURIComponent(username)}/contributions`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "text/html",
+      },
+    });
+    if (!res.ok) return { totalContributions: 0, days: [] };
+    const html = await res.text();
+    return parseContributionHTML(html);
+  } catch (err) {
+    console.error("Contribution scrape error:", err.message);
+    return { totalContributions: 0, days: [] };
   }
-
-  const html = await res.text();
-  return parseContributionHTML(html);
 }
 
 /**
  * Parse GitHub contributions HTML to extract real contribution data.
- *
- * GitHub's HTML structure:
- * <td data-date="2025-03-30" data-level="1"></td>
- * <tool-tip>7 contributions on March 30th.</tool-tip>
- *
- * We extract dates from td elements and counts from tool-tip elements,
- * then match them in order.
  */
 function parseContributionHTML(html) {
-  // Extract total contributions from the header text
   let totalContributions = 0;
-  const totalMatch = html.match(
-    /(\d[\d,]*)\s+contributions?\s+in\s+the\s+last\s+year/i
-  );
+  const totalMatch = html.match(/(\d[\d,]*)\s+contributions?\s+in\s+the\s+last\s+year/i);
   if (totalMatch) {
     totalContributions = parseInt(totalMatch[1].replace(/,/g, ""), 10);
   }
 
-  // Extract day cells with stable ids, dates, and levels.
   const tdRegex = /<td\b[^>]*\bdata-date="\d{4}-\d{2}-\d{2}"[^>]*><\/td>/g;
   const dates = [];
   let match;
@@ -249,13 +171,7 @@ function parseContributionHTML(html) {
     });
   }
 
-  // Extract contribution counts from tooltips keyed by their target day cell id.
-  // Formats include:
-  // - "7 contributions on March 30th."
-  // - "1 contribution on ..."
-  // - "No contributions on ..."
-  const tipRegex =
-    /<tool-tip[^>]*for="([^"]+)"[^>]*>([\s\S]*?)<\/tool-tip>/g;
+  const tipRegex = /<tool-tip[^>]*for="([^"]+)"[^>]*>([\s\S]*?)<\/tool-tip>/g;
   const countById = new Map();
   while ((match = tipRegex.exec(html)) !== null) {
     const targetId = match[1];
@@ -265,10 +181,9 @@ function parseContributionHTML(html) {
     countById.set(targetId, count);
   }
 
-  // Build days array by id so each date receives its own exact count.
   const days = [];
   for (let i = 0; i < dates.length; i++) {
-    const count = countById.has(dates[i].id) ? countById.get(dates[i].id) : 0;
+    const count = countById.has(dates[i].id) ? countById.get(dates[i].id) : (dates[i].level * 2);
     days.push({
       date: dates[i].date,
       count: count,
@@ -276,59 +191,28 @@ function parseContributionHTML(html) {
     });
   }
 
-  // If no tooltips found at all, estimate from level.
-  if (countById.size === 0 && days.length > 0) {
-    const levelEstimates = { 0: 0, 1: 2, 2: 5, 3: 8, 4: 15 };
-    for (const day of days) {
-      day.count = levelEstimates[day.level] || 0;
-    }
-  }
-
-  // Sort by date
   days.sort((a, b) => a.date.localeCompare(b.date));
-
-  // If total wasn't found, sum the days
   if (totalContributions === 0) {
     totalContributions = days.reduce((sum, d) => sum + d.count, 0);
   }
 
-  return {
-    totalContributions,
-    days,
-  };
+  return { totalContributions, days };
 }
 
 /**
- * Fetch all commits by a user with timestamps to calculate actual working time.
- * Formula: TWt = Σ (Ti+1 - Ti) for all i where (Ti+1 - Ti) < 5 hours
- * Where TWt = Total Working Time, Ti = Timestamp of commit i
+ * Fetch commit timestamps for working hours.
  */
 async function fetchUserCommitTimestamps(username) {
   const perPage = 100;
   let page = 1;
   let allCommits = [];
 
-  while (page <= 10) { // Limit to ~1000 most recent commits
-    const url = `${GITHUB_API}/search/commits?q=author:${username}&per_page=${perPage}&page=${page}&sort=author-date`;
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "gitly-app",
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
+  while (page <= 10) {
+    const url = `${GITHUB_API}/search/commits?q=author:${encodeURIComponent(username)}&per_page=${perPage}&page=${page}&sort=author-date`;
+    const data = await safeFetch(url);
+    if (!data || !data.items || data.items.length === 0) break;
 
-    if (!res.ok) {
-      console.warn(`GitHub API warning: ${res.status} on page ${page}`);
-      break;
-    }
-
-    const data = await res.json();
-    const commits = data.items || [];
-    
-    if (commits.length === 0) break;
-
-    // Extract commit timestamps
-    for (const commit of commits) {
+    for (const commit of data.items) {
       if (commit.commit && commit.commit.author && commit.commit.author.date) {
         allCommits.push({
           timestamp: new Date(commit.commit.author.date).getTime(),
@@ -336,8 +220,7 @@ async function fetchUserCommitTimestamps(username) {
         });
       }
     }
-
-    if (commits.length < perPage) break;
+    if (data.items.length < perPage) break;
     page++;
   }
 
@@ -345,13 +228,9 @@ async function fetchUserCommitTimestamps(username) {
     return { totalWorkingHours: 0, commitCount: 0 };
   }
 
-  // Sort commits by timestamp ascending
   allCommits.sort((a, b) => a.timestamp - b.timestamp);
-
-  // Calculate working time: sum all gaps < 5 hours (18000000 ms)
-  const MAX_GAP = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
+  const MAX_GAP = 5 * 60 * 60 * 1000;
   let totalWorkingMs = 0;
-
   for (let i = 0; i < allCommits.length - 1; i++) {
     const gap = allCommits[i + 1].timestamp - allCommits[i].timestamp;
     if (gap > 0 && gap < MAX_GAP) {
@@ -360,69 +239,37 @@ async function fetchUserCommitTimestamps(username) {
   }
 
   const totalWorkingHours = Math.round((totalWorkingMs / (1000 * 60 * 60)) * 100) / 100;
-
-  return {
-    totalWorkingHours,
-    commitCount: allCommits.length,
-  };
+  return { totalWorkingHours, commitCount: allCommits.length };
 }
 
 /**
- * Fetch total commit count by a user across all public repos.
+ * Fetch total commit count.
  */
 async function fetchTotalCommitCount(username) {
-  const url = `${GITHUB_API}/search/commits?q=author:${username}&per_page=1`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "gitly-app",
-      Accept: "application/vnd.github.v3+json",
-    },
-  });
-
-  if (!res.ok) {
-    console.warn(`GitHub commits API warning: ${res.status}`);
-    return 0;
-  }
-
-  const data = await res.json();
-  return data.total_count || 0;
+  const url = `${GITHUB_API}/search/commits?q=author:${encodeURIComponent(username)}&per_page=1`;
+  const data = await safeFetch(url);
+  return data ? (data.total_count || 0) : 0;
 }
 
 /**
- * Fetch total stars of a user's repositories.
+ * Fetch total stars.
  */
 async function fetchUserTotalStars(username) {
   let page = 1;
   let totalStars = 0;
 
-  while (true) {
+  while (page <= 5) {
     const url = `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?type=owner&per_page=100&page=${page}`;
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "gitly-app",
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
+    const data = await safeFetch(url);
+    if (!data || !Array.isArray(data) || data.length === 0) break;
 
-    if (!res.ok) {
-      throw new Error(`GitHub repos API error: ${res.status} ${res.statusText}`);
-    }
-
-    const repos = await res.json();
-    if (!Array.isArray(repos) || repos.length === 0) {
-      break;
-    }
-
-    for (const repo of repos) {
+    for (const repo of data) {
       if (!repo.fork) {
         totalStars += repo.stargazers_count || 0;
       }
     }
 
-    if (repos.length < 100) {
-      break;
-    }
-
+    if (data.length < 100) break;
     page++;
   }
 
@@ -430,21 +277,14 @@ async function fetchUserTotalStars(username) {
 }
 
 /**
- * Fetch lines changed in recent PRs.
+ * Fetch lines changed.
  */
 async function fetchRecentPRLinesChanged(prs, maxPRs = 30) {
-  const targetPRs = prs
+  const targetPRs = (prs || [])
     .filter((pr) => pr && pr.pull_request && pr.pull_request.url)
     .slice(0, maxPRs);
 
-  if (targetPRs.length === 0) {
-    return 0;
-  }
-
-  const headers = {
-    "User-Agent": "gitly-app",
-    Accept: "application/vnd.github.v3+json",
-  };
+  if (targetPRs.length === 0) return 0;
 
   const concurrency = 6;
   let totalChanged = 0;
@@ -453,14 +293,9 @@ async function fetchRecentPRLinesChanged(prs, maxPRs = 30) {
     const batch = targetPRs.slice(i, i + concurrency);
     const results = await Promise.all(
       batch.map(async (pr) => {
-        try {
-          const res = await fetch(pr.pull_request.url, { headers });
-          if (!res.ok) return 0;
-          const data = await res.json();
-          return (data.additions || 0) + (data.deletions || 0);
-        } catch {
-          return 0;
-        }
+        const data = await safeFetch(pr.pull_request.url);
+        if (!data) return 0;
+        return (data.additions || 0) + (data.deletions || 0);
       })
     );
 
@@ -471,45 +306,23 @@ async function fetchRecentPRLinesChanged(prs, maxPRs = 30) {
 }
 
 /**
- * Fetch language usage across user's public repos.
- * Aggregates language bytes from all repos.
+ * Fetch user languages.
  */
 async function fetchUserLanguages(username) {
   let page = 1;
   const langMap = {};
   let totalBytes = 0;
 
-  while (page <= 5) {
-    const url = `${GITHUB_API}/users/${username}/repos?per_page=100&page=${page}&type=owner&sort=updated`;
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "gitly-app",
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
+  while (page <= 3) {
+    const url = `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?per_page=100&page=${page}&type=owner&sort=updated`;
+    const repos = await safeFetch(url);
+    if (!repos || !repos.length) break;
 
-    if (!res.ok) break;
-
-    const repos = await res.json();
-    if (!repos.length) break;
-
-    // Fetch language data for each repo (only fork=false to count unique repos)
     const promises = repos
       .filter((r) => !r.fork && r.size > 0)
-      .slice(0, 30) // limit to 30 repos to avoid rate limits
+      .slice(0, 20)
       .map(async (repo) => {
-        try {
-          const langRes = await fetch(repo.languages_url, {
-            headers: {
-              "User-Agent": "gitly-app",
-              Accept: "application/vnd.github.v3+json",
-            },
-          });
-          if (langRes.ok) {
-            return langRes.json();
-          }
-        } catch {}
-        return {};
+        return await safeFetch(repo.languages_url) || {};
       });
 
     const results = await Promise.all(promises);
@@ -525,53 +338,26 @@ async function fetchUserLanguages(username) {
     page++;
   }
 
-  // Convert to array and calculate percentages
-  let languages = Object.entries(langMap)
+  const languages = Object.entries(langMap)
     .map(([name, bytes]) => ({
       name,
       bytes,
-      rawPercentage: totalBytes > 0 ? ((bytes / totalBytes) * 100) : 0,
+      percentage: totalBytes > 0 ? Math.round(((bytes / totalBytes) * 100) * 100) / 100 : 0,
     }))
     .sort((a, b) => b.bytes - a.bytes);
-
-  // Fix percentages to add up to 100%
-  // Round each to 2 decimal places, ensure minimum 0.01%
-  languages = languages.map((lang, idx) => {
-    let pct = Math.round(lang.rawPercentage * 100) / 100;
-    if (pct < 0.01 && lang.bytes > 0) pct = 0.01;
-    return { name: lang.name, bytes: lang.bytes, percentage: pct };
-  });
-
-  // Adjust last item to make total exactly 100%
-  const totalPct = languages.reduce((sum, l) => sum + l.percentage, 0);
-  if (languages.length > 0 && Math.abs(totalPct - 100) > 0.01) {
-    const diff = 100 - totalPct;
-    languages[languages.length - 1].percentage += diff;
-    languages[languages.length - 1].percentage = Math.round(languages[languages.length - 1].percentage * 100) / 100;
-  }
-
-  // Remove languages with 0 bytes
-  languages = languages.filter(l => l.bytes > 0);
 
   return { languages, totalBytes };
 }
 
-/**
- * Fetch languages by repo count (how many repos use each language).
- */
 async function fetchUserLanguagesByRepos(username) {
   let page = 1;
   const langRepoCount = {};
   let totalRepos = 0;
 
-  while (page <= 5) {
-    const url = `${GITHUB_API}/users/${username}/repos?per_page=100&page=${page}&type=owner&sort=updated`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": "gitly-app", Accept: "application/vnd.github.v3+json" },
-    });
-    if (!res.ok) break;
-    const repos = await res.json();
-    if (!repos.length) break;
+  while (page <= 3) {
+    const url = `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?per_page=100&page=${page}&type=owner&sort=updated`;
+    const repos = await safeFetch(url);
+    if (!repos || !repos.length) break;
 
     for (const repo of repos) {
       if (repo.fork || repo.size <= 0) continue;
@@ -586,7 +372,7 @@ async function fetchUserLanguagesByRepos(username) {
     page++;
   }
 
-  let languages = Object.entries(langRepoCount)
+  const languages = Object.entries(langRepoCount)
     .map(([name, count]) => ({
       name,
       count,
@@ -594,49 +380,27 @@ async function fetchUserLanguagesByRepos(username) {
     }))
     .sort((a, b) => b.count - a.count);
 
-  const totalPct = languages.reduce((sum, l) => sum + l.percentage, 0);
-  if (languages.length > 0 && Math.abs(totalPct - 100) > 0.01) {
-    languages[languages.length - 1].percentage += (100 - totalPct);
-    languages[languages.length - 1].percentage = Math.round(languages[languages.length - 1].percentage * 100) / 100;
-  }
-
   return { languages, totalRepos };
 }
 
-/**
- * Fetch languages by commits (uses stargazers_count + size as activity proxy).
- * Since GitHub API doesn't give commit counts per language without auth,
- * we weight by repo size * (1 + stars) as a proxy for commit activity.
- */
 async function fetchUserLanguagesByCommits(username) {
   let page = 1;
   const langActivity = {};
   let totalActivity = 0;
 
-  while (page <= 5) {
-    const url = `${GITHUB_API}/users/${username}/repos?per_page=100&page=${page}&type=owner&sort=updated`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": "gitly-app", Accept: "application/vnd.github.v3+json" },
-    });
-    if (!res.ok) break;
-    const repos = await res.json();
-    if (!repos.length) break;
+  while (page <= 3) {
+    const url = `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?per_page=100&page=${page}&type=owner&sort=updated`;
+    const repos = await safeFetch(url);
+    if (!repos || !repos.length) break;
 
     const promises = repos
       .filter((r) => !r.fork && r.size > 0)
-      .slice(0, 30)
+      .slice(0, 20)
       .map(async (repo) => {
-        try {
-          const langRes = await fetch(repo.languages_url, {
-            headers: { "User-Agent": "gitly-app", Accept: "application/vnd.github.v3+json" },
-          });
-          if (langRes.ok) {
-            const langs = await langRes.json();
-            const weight = 1 + (repo.stargazers_count || 0) * 0.1;
-            return { langs, weight };
-          }
-        } catch {}
-        return { langs: {}, weight: 1 };
+        const langs = await safeFetch(repo.languages_url);
+        if (!langs) return { langs: {}, weight: 1 };
+        const weight = 1 + (repo.stargazers_count || 0) * 0.1;
+        return { langs, weight };
       });
 
     const results = await Promise.all(promises);
@@ -653,19 +417,13 @@ async function fetchUserLanguagesByCommits(username) {
     page++;
   }
 
-  let languages = Object.entries(langActivity)
+  const languages = Object.entries(langActivity)
     .map(([name, activity]) => ({
       name,
       activity: Math.round(activity),
       percentage: totalActivity > 0 ? Math.round((activity / totalActivity) * 10000) / 100 : 0,
     }))
     .sort((a, b) => b.activity - a.activity);
-
-  const totalPct = languages.reduce((sum, l) => sum + l.percentage, 0);
-  if (languages.length > 0 && Math.abs(totalPct - 100) > 0.01) {
-    languages[languages.length - 1].percentage += (100 - totalPct);
-    languages[languages.length - 1].percentage = Math.round(languages[languages.length - 1].percentage * 100) / 100;
-  }
 
   return { languages, totalActivity };
 }
