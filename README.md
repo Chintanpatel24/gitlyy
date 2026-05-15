@@ -39,6 +39,9 @@
 
 ### 3. Issues Card
 
+<img width="457" height="165" alt="issues" src="https://github.com/user-attachments/assets/433982e4-679f-4ea8-b09b-deb6427ac751" />
+
+
 - Shows counts for **Open**, **Total**, and **Closed** issues.
 
 ```html
@@ -153,7 +156,8 @@ II. **Compact** (total, current streak, longest streak):
 
  II. **Compact**:
 
-<img src="images/12.png">
+<img width="457" height="160" alt="pr" src="https://github.com/user-attachments/assets/ccd0ca59-e474-4344-9672-120f5b16b87b" />
+
 
 ```html
 <img src="https://gitlyy.vercel.app/api/pr-stats?username=YOUR_USERNAME&layout=compact&hide_border=true"/>
