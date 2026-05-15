@@ -17,7 +17,8 @@ const {
   fetchClosedIssues,
   fetchMergedPullRequests,
   fetchUserTotalStars,
-  fetchRecentPRLinesChanged
+  fetchRecentPRLinesChanged,
+  fetchOpenPullRequests // Added this
 } = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generateMasterCardSVG } = require("../src/svg-master");
@@ -39,7 +40,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const cacheKey = `master_full:${username.toLowerCase()}`;
+    const cacheKey = `master_full_v3:${username.toLowerCase()}`;
 
     if (refresh === "true") {
       clearCache(cacheKey);
@@ -52,7 +53,7 @@ module.exports = async (req, res) => {
         const [
           prs, profile, contributionData, langData,
           totalCommits, totalIssues, openIssues, closedIssues,
-          mergedPRCount, totalStars
+          mergedPRCount, totalStars, openPRCount
         ] = await Promise.all([
           fetchUserPullRequests(username),
           fetchUserProfile(username),
@@ -63,10 +64,11 @@ module.exports = async (req, res) => {
           fetchOpenIssues(username),
           fetchClosedIssues(username),
           fetchMergedPullRequests(username),
-          fetchUserTotalStars(username)
+          fetchUserTotalStars(username),
+          fetchOpenPullRequests(username)
         ]);
 
-        const linesChanged = await fetchRecentPRLinesChanged(prs, 15);
+        const linesChanged = await fetchRecentPRLinesChanged(prs, 5);
 
         const days = contributionData?.days || [];
         const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
@@ -76,7 +78,7 @@ module.exports = async (req, res) => {
 
         for (let i = sortedDays.length - 1; i >= 0; i--) {
           if (sortedDays[i].count > 0) currentStreak++;
-          else break;
+          else if (i < sortedDays.length - 1) break;
         }
         for (const day of sortedDays) {
           if (day.count > 0) { tempStreak++; longestStreak = Math.max(longestStreak, tempStreak); }
@@ -84,7 +86,7 @@ module.exports = async (req, res) => {
         }
 
         const repoMap = {};
-        (prs || []).forEach(pr => {
+        (prs || []).slice(0, 50).forEach(pr => {
           if (pr.repository_url) {
             const name = pr.repository_url.split("/repos/")[1];
             repoMap[name] = (repoMap[name] || 0) + 1;
@@ -97,7 +99,7 @@ module.exports = async (req, res) => {
         data = {
           username: profile?.login || username,
           totalPRs: prs?.length || 0,
-          openPRs: (prs || []).filter(pr => pr.state === "open").length,
+          openPRs: openPRCount || 0,
           mergedPRs: mergedPRCount || 0,
           repoCount: profile?.public_repos || 0,
           languages: langData?.languages || [],
@@ -116,25 +118,13 @@ module.exports = async (req, res) => {
 
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
-        console.error("Mastercard Full fetch error:", fetchErr.message);
+        console.error("Mastercard Optimized Fetch error:", fetchErr.message);
         data = {
-          username: username,
-          totalPRs: 0,
-          openPRs: 0,
-          mergedPRs: 0,
-          repoCount: 0,
-          languages: [],
-          contributions: 0,
-          repoList: [],
-          contributionDays: [],
-          currentStreak: 0,
-          longestStreak: 0,
-          totalCommits: 0,
-          totalIssues: 0,
-          openIssues: 0,
-          closedIssues: 0,
-          totalStars: 0,
-          linesChanged: 0
+          username: username, totalPRs: 0, openPRs: 0, mergedPRs: 0,
+          repoCount: 0, languages: [], contributions: 0, repoList: [],
+          contributionDays: [], currentStreak: 0, longestStreak: 0,
+          totalCommits: 0, totalIssues: 0, openIssues: 0, closedIssues: 0,
+          totalStars: 0, linesChanged: 0
         };
       }
     }
@@ -150,8 +140,8 @@ module.exports = async (req, res) => {
 
     res.status(200).send(svg);
   } catch (error) {
-    console.error("Mastercard Full Error:", error.message);
-    res.status(200).send(errorSVG("Failed to load full dashboard data"));
+    console.error("Mastercard API Error:", error.message);
+    res.status(200).send(errorSVG("Failed to load dashboard"));
   }
 };
 
