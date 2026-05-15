@@ -1,6 +1,6 @@
 /**
- * Master Card SVG generation - all cards merged into one dashboard SVG.
- * Enhanced design with streaks, trend line, and polished visuals.
+ * Master Card SVG generation - Vertical Structured Dashboard.
+ * Clean, classic, and fited for GitHub Readme.
  */
 
 function getContributionColorByLevel(level) {
@@ -17,236 +17,186 @@ function generateMasterCardSVG(options) {
     username,
     totalPRs = 0,
     openPRs = 0,
+    mergedPRs = 0,
     repoCount = 0,
     languages = [],
     contributions = 0,
     totalCommits = 0,
     repoList = [],
-    visitors = 0,
     contributionDays = [],
     currentStreak = 0,
     longestStreak = 0,
+    totalIssues = 0,
+    openIssues = 0,
+    closedIssues = 0,
     colors,
     hideBorder,
-    cardWidth = 1000,
+    cardWidth = 495,
   } = options;
 
   const pad = 24;
-  const contentW = Math.max(820, cardWidth - pad * 2);
-  const cardHeight = 700;
+  const innerW = cardWidth - pad * 2;
   const hba = hideBorder ? `rx="10"` : `rx="10" stroke="#30363d" stroke-width="1"`;
 
   const accentColor = (colors && colors.accent_color) || "58a6ff";
-  const titleColor = (colors && colors.title_color) || "e6edf3";
+  const titleColor = (colors && colors.title_color) || "58a6ff";
   const textColor = (colors && colors.text_color) || "c9d1d9";
 
+  let y = 0;
+  let sections = "";
+
   // --- HEADER ---
-  const headerY = 0;
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${cardWidth}" height="${cardHeight}" viewBox="0 0 ${cardWidth} ${cardHeight}">
-  <defs>
-    <linearGradient id="mHdr" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#${accentColor};stop-opacity:0.18"/>
-      <stop offset="100%" style="stop-color:#${accentColor};stop-opacity:0"/>
-    </linearGradient>
-    <linearGradient id="mHeatG" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#39d353;stop-opacity:0.15"/>
-      <stop offset="100%" style="stop-color:#39d353;stop-opacity:0"/>
-    </linearGradient>
-  </defs>
+  sections += `
+  <g transform="translate(${pad}, 20)">
+    <text x="0" y="20" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="22" font-weight="700" fill="#${titleColor}">${escapeXml(username)}'s GitHub Stats</text>
+    <rect x="0" y="32" width="40" height="3" fill="#${accentColor}" rx="2"/>
+  </g>`;
+  y = 70;
 
-  <rect width="${cardWidth}" height="${cardHeight}" fill="#0d1117" ${hba}/>
-  <rect width="${cardWidth}" height="4" fill="#${accentColor}" rx="10"/>
-  <rect x="1" y="4" width="${cardWidth - 2}" height="52" fill="url(#mHdr)"/>
-
-  <!-- Title bar -->
-  <g transform="translate(${pad},16)">
-    <text x="0" y="22" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="20" font-weight="700" fill="#${titleColor}">${escapeXml(username)}</text>
-    <text x="0" y="38" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="11" fill="#8b949e">Dashboard</text>
-  </g>
-
-  <!-- Badge: total contributions -->
-  <g transform="translate(${cardWidth - pad - 180},18)">
-    <rect width="180" height="32" rx="16" fill="#39d353" opacity=".12"/>
-    <text x="90" y="21" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" font-weight="600" fill="#39d353">${contributions.toLocaleString()} contributions</text>
-  </g>
-`;
-
-  // --- STAT CARDS (6 stats in a row) ---
-  const stats = [
+  // --- KEY STATS ROW ---
+  const statW = Math.floor(innerW / 3);
+  const keyStats = [
     { label: "Commits", value: totalCommits.toLocaleString(), color: accentColor },
-    { label: "Total PRs", value: totalPRs, color: accentColor },
-    { label: "Open PRs", value: openPRs, color: "f85149" },
-    { label: "Repos", value: repoCount, color: "1f6feb" },
-    { label: "Cur. Streak", value: currentStreak + "d", color: "f97316" },
-    { label: "Best Streak", value: longestStreak + "d", color: "eab308" },
+    { label: "Contributions", value: contributions.toLocaleString(), color: "39d353" },
+    { label: "Repositories", value: repoCount, color: "1f6feb" },
   ];
 
-  const statGap = 10;
-  const statCount = stats.length;
-  const statW = Math.floor((contentW - statGap * (statCount - 1)) / statCount);
-  const statH = 78;
-
-  stats.forEach((s, i) => {
-    const x = pad + i * (statW + statGap);
-    svg += `<g transform="translate(${x},72)">
-      <rect width="${statW}" height="${statH}" rx="10" fill="#${s.color}" opacity=".08"/>
-      <rect width="${statW}" height="${statH}" rx="10" fill="none" stroke="#${s.color}" stroke-opacity=".15" stroke-width="1"/>
-      <text x="${statW / 2}" y="38" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="24" font-weight="700" fill="#${s.color}">${s.value}</text>
-      <text x="${statW / 2}" y="62" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="10" fill="#8b949e">${s.label}</text>
+  sections += `<g transform="translate(${pad}, ${y})">`;
+  keyStats.forEach((s, i) => {
+    sections += `
+    <g transform="translate(${i * statW}, 0)">
+      <text x="${statW / 2}" y="18" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="18" font-weight="700" fill="#${s.color}">${s.value}</text>
+      <text x="${statW / 2}" y="34" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="10" font-weight="600" fill="#8b949e" style="text-transform:uppercase;letter-spacing:0.5px">${s.label}</text>
     </g>`;
   });
+  sections += `</g>`;
+  y += 50;
 
-  // --- DIVIDER ---
-  const divY = 162;
-  svg += `<line x1="${pad}" y1="${divY}" x2="${cardWidth - pad}" y2="${divY}" stroke="#30363d" stroke-width="1"/>`;
+  sections += `<line x1="${pad}" y1="${y}" x2="${cardWidth - pad}" y2="${y}" stroke="#30363d" stroke-width="1" opacity="0.5"/>`;
+  y += 20;
 
-  // --- TOP REPOS (left) + TOP LANGS (right) ---
-  const section2Y = divY + 16;
-  svg += `<text x="${pad + 8}" y="${section2Y + 10}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" font-weight="600" fill="#${titleColor}">Top Repositories</text>`;
-  svg += `<text x="${pad + 498}" y="${section2Y + 10}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" font-weight="600" fill="#${titleColor}">Top Languages</text>`;
+  // --- CONTRIBUTIONS HEATMAP ---
+  sections += `<text x="${pad}" y="${y}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" font-weight="600" fill="#${titleColor}">Recent Contributions</text>`;
+  y += 10;
 
-  const topRepos = repoList.slice(0, 5);
-  const maxRepoCount = Math.max(1, ...topRepos.map(r => r.count || 0));
+  const sortedDays = [...contributionDays].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const recent = sortedDays.slice(-105); // 15 weeks
+  const cell = 8, gap = 3;
+  const step = cell + gap;
 
-  topRepos.forEach((repo, i) => {
-    const y = section2Y + 18 + i * 28;
-    const name = String(repo.name || "unknown");
-    const shortName = name.length > 24 ? `${name.slice(0, 21)}...` : name;
-    const pct = (repo.count || 0) / maxRepoCount;
-    const barW = Math.round(200 * pct);
-    svg += `<g transform="translate(${pad + 8},${y})">
-      <text x="0" y="14" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="11" fill="#${textColor}">${escapeXml(shortName)}</text>
-      <rect x="180" y="2" width="200" height="12" rx="6" fill="#30363d"/>
-      <rect x="180" y="2" width="${barW}" height="12" rx="6" fill="#${accentColor}"/>
-      <text x="390" y="14" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#${accentColor}">${repo.count || 0}</text>
-    </g>`;
+  sections += `<g transform="translate(${pad}, ${y})">`;
+  recent.forEach((d, i) => {
+    const col = Math.floor(i / 7);
+    const row = i % 7;
+    sections += `<rect x="${col * step}" y="${row * step}" width="${cell}" height="${cell}" rx="2" fill="#${getContributionColorByLevel(d.level)}"/>`;
   });
 
-  // Languages
+  // Streak badges next to heatmap
+  const streakX = 15 * step + 20;
+  sections += `
+  <g transform="translate(${streakX}, 5)">
+    <text x="0" y="12" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="10" fill="#8b949e">Current Streak</text>
+    <text x="0" y="30" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="18" font-weight="700" fill="#39d353">${currentStreak} Days</text>
+    <text x="0" y="50" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="10" fill="#8b949e">Longest Streak</text>
+    <text x="0" y="68" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="18" font-weight="700" fill="#f97316">${longestStreak} Days</text>
+  </g>`;
+  sections += `</g>`;
+  y += 90;
+
+  // --- TOP LANGUAGES ---
+  sections += `<text x="${pad}" y="${y}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" font-weight="600" fill="#${titleColor}">Top Languages</text>`;
+  y += 12;
+
   const { getLanguageColor } = require("./languages");
   const topLangs = languages.slice(0, 5);
+
+  // Horizontal stacked bar
+  sections += `<g transform="translate(${pad}, ${y})">`;
+  let barX = 0;
+  topLangs.forEach(lang => {
+    const w = (lang.percentage / 100) * innerW;
+    if (w > 1) {
+       sections += `<rect x="${barX}" y="0" width="${w}" height="10" fill="#${getLanguageColor(lang.name)}" ${barX === 0 ? 'rx="5"' : ''} ${barX + w >= innerW - 1 ? 'rx="5"' : ''}/>`;
+       barX += w;
+    }
+  });
+  sections += `</g>`;
+  y += 22;
+
+  // Language legend
+  sections += `<g transform="translate(${pad}, ${y})">`;
   topLangs.forEach((lang, i) => {
-    const y = section2Y + 18 + i * 28;
-    const langName = String(lang.name || "Unknown");
-    const langPct = Number(lang.percentage || 0);
-    const barW = Math.round(170 * Math.max(0, Math.min(100, langPct)) / 100);
-    const langColor = getLanguageColor(langName);
-    svg += `<g transform="translate(${pad + 498},${y})">
-      <circle cx="6" cy="10" r="5" fill="#${langColor}"/>
-      <text x="18" y="14" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="11" fill="#${textColor}">${escapeXml(langName)}</text>
-      <rect x="120" y="2" width="170" height="12" rx="6" fill="#30363d"/>
-      <rect x="120" y="2" width="${barW}" height="12" rx="6" fill="#${langColor}"/>
-      <text x="300" y="14" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#${langColor}">${langPct.toFixed(1)}%</text>
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+    const lx = col * (innerW / 3);
+    const ly = row * 20;
+    sections += `
+    <g transform="translate(${lx}, ${ly})">
+      <circle cx="5" cy="5" r="4" fill="#${getLanguageColor(lang.name)}"/>
+      <text x="14" y="9" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="11" fill="#${textColor}">${escapeXml(lang.name)} <tspan fill="#8b949e" font-weight="400">${lang.percentage.toFixed(1)}%</tspan></text>
     </g>`;
   });
+  sections += `</g>`;
+  y += topLangs.length > 3 ? 45 : 25;
 
-  // --- DIVIDER ---
-  const div2Y = section2Y + 18 + 5 * 28 + 8;
-  svg += `<line x1="${pad}" y1="${div2Y}" x2="${cardWidth - pad}" y2="${div2Y}" stroke="#30363d" stroke-width="1"/>`;
+  sections += `<line x1="${pad}" y1="${y}" x2="${cardWidth - pad}" y2="${y}" stroke="#30363d" stroke-width="1" opacity="0.5"/>`;
+  y += 20;
 
-  // --- 30 DAY TREND LINE (left) + HEATMAP (right) ---
-  const sortedDays = [...contributionDays].sort((a, b) => String(a.date).localeCompare(String(b.date)));
-  const recent = sortedDays.slice(-126);
-  const last30 = sortedDays.slice(-30);
+  // --- PR & ISSUES SUMMARY ---
+  sections += `<text x="${pad}" y="${y}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" font-weight="600" fill="#${titleColor}">Pull Requests &amp; Issues</text>`;
+  y += 15;
 
-  // Trend line section
-  const trendSectionY = div2Y + 16;
-  svg += `<text x="${pad + 8}" y="${trendSectionY + 10}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" font-weight="600" fill="#${titleColor}">30-Day Trend</text>`;
+  const summaryStats = [
+    { label: "Merged PRs", value: mergedPRs, color: "8b5cf6" },
+    { label: "Open PRs", value: openPRs, color: "3fb950" },
+    { label: "Open Issues", value: openIssues, color: "f85149" },
+    { label: "Closed Issues", value: closedIssues, color: "8b949e" },
+  ];
 
-  const trendX = pad + 8;
-  const trendY = trendSectionY + 20;
-  const trendW = 380;
-  const trendH = 50;
-  const max30 = Math.max(...last30.map(d => d.count), 1);
-  const stepX = last30.length > 1 ? trendW / (last30.length - 1) : 0;
-
-  // Grid lines
-  for (let i = 0; i <= 4; i++) {
-    const gy = trendY + trendH - (i / 4) * trendH;
-    svg += `<line x1="${trendX}" y1="${gy}" x2="${trendX + trendW}" y2="${gy}" stroke="#30363d" stroke-width=".3"/>`;
-  }
-
-  // Area fill
-  let areaPath = `M${trendX},${trendY + trendH} `;
-  last30.forEach((d, i) => {
-    const x = trendX + i * stepX;
-    const y = trendY + trendH - (d.count / max30) * trendH;
-    areaPath += `L${x},${y} `;
+  sections += `<g transform="translate(${pad}, ${y})">`;
+  summaryStats.forEach((s, i) => {
+    const lx = (i % 2) * (innerW / 2);
+    const ly = Math.floor(i / 2) * 35;
+    sections += `
+    <g transform="translate(${lx}, ${ly})">
+       <rect width="${innerW / 2 - 10}" height="28" rx="6" fill="#${s.color}" opacity="0.08"/>
+       <text x="10" y="19" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="11" fill="#8b949e">${s.label}</text>
+       <text x="${innerW / 2 - 20}" y="19" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="14" font-weight="700" fill="#${s.color}">${s.value}</text>
+    </g>`;
   });
-  areaPath += `L${trendX + (last30.length - 1) * stepX},${trendY + trendH} Z`;
-  svg += `<path d="${areaPath}" fill="#${accentColor}" opacity=".08"/>`;
+  sections += `</g>`;
+  y += 75;
 
-  // Line
-  let trendPath = "";
-  let trendDots = "";
-  last30.forEach((d, i) => {
-    const x = trendX + i * stepX;
-    const y = trendY + trendH - (d.count / max30) * trendH;
-    trendPath += `${i === 0 ? "M" : "L"}${x},${y} `;
-    if (i === last30.length - 1 || d.count === max30) {
-      trendDots += `<circle cx="${x}" cy="${y}" r="3" fill="#${accentColor}"><title>${d.date}: ${d.count}</title></circle>`;
-    }
+  // --- TOP REPOS ---
+  sections += `<text x="${pad}" y="${y}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" font-weight="600" fill="#${titleColor}">Top Repositories</text>`;
+  y += 10;
+
+  const topRepos = repoList.slice(0, 4);
+  sections += `<g transform="translate(${pad}, ${y})">`;
+  topRepos.forEach((repo, i) => {
+    const ly = i * 28;
+    const barMaxWidth = innerW - 140;
+    const barW = Math.min(barMaxWidth, (repo.count / (topRepos[0].count || 1)) * barMaxWidth);
+    const repoName = repo.name.length > 25 ? repo.name.substring(0, 22) + "..." : repo.name;
+    sections += `
+    <g transform="translate(0, ${ly})">
+      <text x="0" y="18" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="11" fill="#${textColor}">${escapeXml(repoName)}</text>
+      <rect x="120" y="8" width="${barMaxWidth}" height="8" rx="4" fill="#30363d" opacity="0.3"/>
+      <rect x="120" y="8" width="${barW}" height="8" rx="4" fill="#${accentColor}" opacity="0.6"/>
+      <text x="${innerW}" y="18" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#${accentColor}">${repo.count}</text>
+    </g>`;
   });
-  svg += `<path d="${trendPath.trim()}" fill="none" stroke="#${accentColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
-  svg += trendDots;
+  sections += `</g>`;
+  y += topRepos.length * 28 + 10;
 
-  // Avg label
-  const avg30 = last30.length > 0 ? (last30.reduce((s, d) => s + d.count, 0) / last30.length).toFixed(1) : "0";
-  svg += `<text x="${trendX}" y="${trendY + trendH + 14}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="10" fill="#8b949e">Avg: ${avg30}/day</text>`;
+  const cardHeight = y + 20;
 
-  // Heatmap section
-  const heatmapLabelX = pad + 420;
-  svg += `<text x="${heatmapLabelX}" y="${trendSectionY + 10}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="12" font-weight="600" fill="#${titleColor}">Activity Heatmap (${recent.length}d)</text>`;
-
-  const cell = 8;
-  const cellGap = 3;
-  const cellStep = cell + cellGap;
-  const heatmapX = heatmapLabelX;
-  const heatmapY = trendSectionY + 18;
-
-  // Month labels for heatmap
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  let prevMonth = -1;
-  let heatmapCells = "";
-  recent.forEach((d, idx) => {
-    const col = Math.floor(idx / 7);
-    const row = idx % 7;
-    const x = heatmapX + col * cellStep;
-    const y = heatmapY + row * cellStep;
-    const fill = getContributionColorByLevel(d.level);
-    const count = Number(d.count || 0);
-    const date = escapeXml(String(d.date || ""));
-
-    // Month label
-    const dt = new Date(`${d.date}T00:00:00`);
-    const month = dt.getMonth();
-    if (row === 0 && month !== prevMonth) {
-      svg += `<text x="${x}" y="${heatmapY - 4}" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="8" fill="#8b949e">${monthNames[month]}</text>`;
-      prevMonth = month;
-    }
-
-    heatmapCells += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" rx="2" fill="#${fill}"><title>${date}: ${count}</title></rect>`;
-  });
-  svg += heatmapCells;
-
-  // Legend
-  const legY = heatmapY + 7 * cellStep + 12;
-  svg += `<g transform="translate(${heatmapX},${legY})">
-    <text x="0" y="9" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="9" fill="#8b949e">Less</text>
-    <rect x="28" y="1" width="8" height="8" rx="2" fill="#161b22"/>
-    <rect x="39" y="1" width="8" height="8" rx="2" fill="#0e4429"/>
-    <rect x="50" y="1" width="8" height="8" rx="2" fill="#006d32"/>
-    <rect x="61" y="1" width="8" height="8" rx="2" fill="#26a641"/>
-    <rect x="72" y="1" width="8" height="8" rx="2" fill="#39d353"/>
-    <text x="86" y="9" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="9" fill="#8b949e">More</text>
-  </g>`;
-
-  // --- FOOTER ---
-  svg += `<line x1="${pad}" y1="${cardHeight - 18}" x2="${cardWidth - pad}" y2="${cardHeight - 18}" stroke="#30363d" stroke-width=".7"/>`;
-  svg += `<text x="${cardWidth - pad}" y="${cardHeight - 6}" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="10" fill="#8b949e">Generated by Gitly</text>`;
-  svg += `</svg>`;
-
-  return svg;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${cardWidth}" height="${cardHeight}" viewBox="0 0 ${cardWidth} ${cardHeight}">
+  <rect width="${cardWidth}" height="${cardHeight}" fill="#0d1117" ${hba}/>
+  <rect width="${cardWidth}" height="3" fill="#${accentColor}" rx="10"/>
+  ${sections}
+  <text x="${cardWidth - pad}" y="${cardHeight - 12}" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="9" fill="#8b949e" opacity="0.5">Generated by Gitly</text>
+</svg>`;
 }
 
 module.exports = { generateMasterCardSVG, escapeXml };

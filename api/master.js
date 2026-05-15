@@ -11,7 +11,11 @@ const {
   fetchContributionData,
   fetchUserProfile,
   fetchUserLanguages,
-  fetchTotalCommitCount
+  fetchTotalCommitCount,
+  fetchUserIssues,
+  fetchOpenIssues,
+  fetchClosedIssues,
+  fetchMergedPullRequests
 } = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generateMasterCardSVG } = require("../src/svg-master");
@@ -43,12 +47,16 @@ module.exports = async (req, res) => {
 
     if (!data) {
       try {
-        const [prs, profile, contributionData, langData, totalCommits] = await Promise.all([
+        const [prs, profile, contributionData, langData, totalCommits, totalIssues, openIssues, closedIssues, mergedPRCount] = await Promise.all([
           fetchUserPullRequests(username),
           fetchUserProfile(username),
           fetchContributionData(username),
           fetchUserLanguages(username),
-          fetchTotalCommitCount(username)
+          fetchTotalCommitCount(username),
+          fetchUserIssues(username),
+          fetchOpenIssues(username),
+          fetchClosedIssues(username),
+          fetchMergedPullRequests(username)
         ]);
 
         const days = contributionData?.days || [];
@@ -81,6 +89,7 @@ module.exports = async (req, res) => {
           username: profile?.login || username,
           totalPRs: prs?.length || 0,
           openPRs: (prs || []).filter(pr => pr.state === "open").length,
+          mergedPRs: mergedPRCount || 0,
           repoCount: profile?.public_repos || 0,
           languages: langData?.languages || [],
           contributions: contributionData?.totalContributions || 0,
@@ -88,7 +97,10 @@ module.exports = async (req, res) => {
           contributionDays: days,
           currentStreak,
           longestStreak,
-          totalCommits
+          totalCommits,
+          totalIssues: totalIssues || 0,
+          openIssues: openIssues || 0,
+          closedIssues: closedIssues || 0
         };
 
         setCache(cacheKey, data, CACHE_TTL);
@@ -98,6 +110,7 @@ module.exports = async (req, res) => {
           username: username,
           totalPRs: 0,
           openPRs: 0,
+          mergedPRs: 0,
           repoCount: 0,
           languages: [],
           contributions: 0,
@@ -105,7 +118,10 @@ module.exports = async (req, res) => {
           contributionDays: [],
           currentStreak: 0,
           longestStreak: 0,
-          totalCommits: 0
+          totalCommits: 0,
+          totalIssues: 0,
+          openIssues: 0,
+          closedIssues: 0
         };
       }
     }
@@ -117,6 +133,7 @@ module.exports = async (req, res) => {
       username: data.username,
       totalPRs: data.totalPRs,
       openPRs: data.openPRs,
+      mergedPRs: data.mergedPRs,
       repoCount: data.repoCount,
       languages: data.languages,
       contributions: data.contributions,
@@ -125,6 +142,9 @@ module.exports = async (req, res) => {
       contributionDays: data.contributionDays,
       currentStreak: data.currentStreak,
       longestStreak: data.longestStreak,
+      totalIssues: data.totalIssues,
+      openIssues: data.openIssues,
+      closedIssues: data.closedIssues,
       colors,
       hideBorder: hide_border === "true",
     });
