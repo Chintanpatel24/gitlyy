@@ -9,14 +9,14 @@ const GITHUB_API = "https://api.github.com";
  */
 async function safeFetch(url, options = {}) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
 
   try {
     const res = await fetch(url, {
       ...options,
       headers: {
-        "User-Agent": "gitly-app",
-        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "gitly-app-bot",
+        "Accept": options.headers?.Accept || "application/vnd.github.v3+json",
         ...(options.headers || {}),
       },
       signal: controller.signal,
@@ -25,7 +25,11 @@ async function safeFetch(url, options = {}) {
     clearTimeout(timeoutId);
 
     if (!res.ok) {
-      console.warn(`GitHub API warning: ${res.status} for ${url}`);
+      if (res.status === 403 || res.status === 429) {
+        console.warn(`GitHub API Rate Limit hit for ${url}`);
+      } else {
+        console.warn(`GitHub API warning: ${res.status} for ${url}`);
+      }
       return null;
     }
     return await res.json();
@@ -37,29 +41,25 @@ async function safeFetch(url, options = {}) {
 }
 
 /**
- * Fetch all pull requests by a user across all public repos.
+ * Fetch all pull requests by a user.
  */
 async function fetchUserPullRequests(username) {
   const perPage = 100;
   let page = 1;
   let allPRs = [];
-
-  while (page <= 5) {
-    const url = `${GITHUB_API}/search/issues?q=author:${encodeURIComponent(username)}+type:pr&per_page=${perPage}&page=${page}`;
-    const data = await safeFetch(url);
-    if (!data || !data.items || data.items.length === 0) break;
-
-    allPRs = allPRs.concat(data.items);
-    if (allPRs.length >= data.total_count || data.items.length < perPage) break;
-    page++;
-  }
-
-  return allPRs;
+  try {
+    while (page <= 2) { // Limited to 2 pages to save rate limit
+      const url = `${GITHUB_API}/search/issues?q=author:${encodeURIComponent(username)}+type:pr&per_page=${perPage}&page=${page}`;
+      const data = await safeFetch(url);
+      if (!data || !data.items || data.items.length === 0) break;
+      allPRs = allPRs.concat(data.items);
+      if (allPRs.length >= data.total_count || data.items.length < perPage) break;
+      page++;
+    }
+  } catch (e) {}
+  return allPRs; // Returns empty array if fails
 }
 
-/**
- * PR counts
- */
 async function fetchOpenPullRequests(username) {
   const url = `${GITHUB_API}/search/issues?q=author:${encodeURIComponent(username)}+type:pr+state:open&per_page=1`;
   const data = await safeFetch(url);
@@ -78,9 +78,6 @@ async function fetchMergedPullRequests(username) {
   return data ? (data.total_count || 0) : 0;
 }
 
-/**
- * Issue counts
- */
 async function fetchUserIssues(username) {
   const url = `${GITHUB_API}/search/issues?q=author:${encodeURIComponent(username)}+type:issue&per_page=1`;
   const data = await safeFetch(url);
@@ -99,9 +96,6 @@ async function fetchClosedIssues(username) {
   return data ? (data.total_count || 0) : 0;
 }
 
-/**
- * Group pull requests by repository name.
- */
 function groupPRsByRepo(prs) {
   const repoMap = {};
   if (!Array.isArray(prs)) return repoMap;
@@ -113,9 +107,6 @@ function groupPRsByRepo(prs) {
   return repoMap;
 }
 
-/**
- * Fetch user profile info.
- */
 async function fetchUserProfile(username) {
   const url = `${GITHUB_API}/users/${encodeURIComponent(username)}`;
   const data = await safeFetch(url);
@@ -123,9 +114,6 @@ async function fetchUserProfile(username) {
   return data;
 }
 
-/**
- * Fetch REAL contribution data by scraping GitHub's contribution page.
- */
 async function fetchContributionData(username) {
   const url = `https://github.com/users/${encodeURIComponent(username)}/contributions`;
   try {
@@ -144,9 +132,6 @@ async function fetchContributionData(username) {
   }
 }
 
-/**
- * Parse GitHub contributions HTML to extract real contribution data.
- */
 function parseContributionHTML(html) {
   let totalContributions = 0;
   const totalMatch = html.match(/(\d[\d,]*)\s+contributions?\s+in\s+the\s+last\s+year/i);
@@ -154,20 +139,19 @@ function parseContributionHTML(html) {
     totalContributions = parseInt(totalMatch[1].replace(/,/g, ""), 10);
   }
 
-  const tdRegex = /<td\b[^>]*\bdata-date="\d{4}-\d{2}-\d{2}"[^>]*><\/td>/g;
+  const entryRegex = /<(?:td|rect)\b[^>]*\bdata-date="(\d{4}-\d{2}-\d{2})"[^>]*data-level="(\d+)"[^>]*>/g;
   const dates = [];
   let match;
-  while ((match = tdRegex.exec(html)) !== null) {
+  while ((match = entryRegex.exec(html)) !== null) {
+    const date = match[1];
+    const level = parseInt(match[2], 10);
     const tag = match[0];
     const idMatch = tag.match(/\bid="([^"]+)"/);
-    const dateMatch = tag.match(/\bdata-date="(\d{4}-\d{2}-\d{2})"/);
-    const levelMatch = tag.match(/\bdata-level="(\d+)"/);
-    if (!dateMatch || !levelMatch) continue;
 
     dates.push({
       id: idMatch ? idMatch[1] : `day-${dates.length}`,
-      date: dateMatch[1],
-      level: parseInt(levelMatch[1], 10),
+      date,
+      level,
     });
   }
 
@@ -199,178 +183,71 @@ function parseContributionHTML(html) {
   return { totalContributions, days };
 }
 
-/**
- * Fetch commit timestamps for working hours.
- */
-async function fetchUserCommitTimestamps(username) {
-  const perPage = 100;
-  let page = 1;
-  let allCommits = [];
-
-  while (page <= 10) {
-    const url = `${GITHUB_API}/search/commits?q=author:${encodeURIComponent(username)}&per_page=${perPage}&page=${page}&sort=author-date`;
-    const data = await safeFetch(url);
-    if (!data || !data.items || data.items.length === 0) break;
-
-    for (const commit of data.items) {
-      if (commit.commit && commit.commit.author && commit.commit.author.date) {
-        allCommits.push({
-          timestamp: new Date(commit.commit.author.date).getTime(),
-          date: commit.commit.author.date,
-        });
-      }
-    }
-    if (data.items.length < perPage) break;
-    page++;
-  }
-
-  if (allCommits.length === 0) {
-    return { totalWorkingHours: 0, commitCount: 0 };
-  }
-
-  allCommits.sort((a, b) => a.timestamp - b.timestamp);
-  const MAX_GAP = 5 * 60 * 60 * 1000;
-  let totalWorkingMs = 0;
-  for (let i = 0; i < allCommits.length - 1; i++) {
-    const gap = allCommits[i + 1].timestamp - allCommits[i].timestamp;
-    if (gap > 0 && gap < MAX_GAP) {
-      totalWorkingMs += gap;
-    }
-  }
-
-  const totalWorkingHours = Math.round((totalWorkingMs / (1000 * 60 * 60)) * 100) / 100;
-  return { totalWorkingHours, commitCount: allCommits.length };
-}
-
-/**
- * Fetch total commit count.
- */
 async function fetchTotalCommitCount(username) {
   const url = `${GITHUB_API}/search/commits?q=author:${encodeURIComponent(username)}&per_page=1`;
-  const data = await safeFetch(url);
+  const data = await safeFetch(url, { headers: { Accept: "application/vnd.github.cloak-preview" } });
   return data ? (data.total_count || 0) : 0;
 }
 
-/**
- * Fetch total stars.
- */
 async function fetchUserTotalStars(username) {
   let page = 1;
   let totalStars = 0;
-
-  while (page <= 5) {
-    const url = `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?type=owner&per_page=100&page=${page}`;
-    const data = await safeFetch(url);
-    if (!data || !Array.isArray(data) || data.length === 0) break;
-
-    for (const repo of data) {
-      if (!repo.fork) {
-        totalStars += repo.stargazers_count || 0;
+  try {
+    while (page <= 2) {
+      const url = `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?type=owner&per_page=100&page=${page}`;
+      const data = await safeFetch(url);
+      if (!data || !Array.isArray(data) || data.length === 0) break;
+      for (const repo of data) {
+        if (!repo.fork) totalStars += repo.stargazers_count || 0;
       }
+      if (data.length < 100) break;
+      page++;
     }
-
-    if (data.length < 100) break;
-    page++;
-  }
-
+  } catch (e) {}
   return totalStars;
 }
 
-/**
- * Fetch lines changed.
- */
-async function fetchRecentPRLinesChanged(prs, maxPRs = 30) {
-  const targetPRs = (prs || [])
-    .filter((pr) => pr && pr.pull_request && pr.pull_request.url)
-    .slice(0, maxPRs);
-
+async function fetchRecentPRLinesChanged(prs, maxPRs = 10) {
+  const targetPRs = (prs || []).filter((pr) => pr && pr.pull_request && pr.pull_request.url).slice(0, maxPRs);
   if (targetPRs.length === 0) return 0;
-
-  const concurrency = 6;
+  const concurrency = 2;
   let totalChanged = 0;
-
   for (let i = 0; i < targetPRs.length; i += concurrency) {
     const batch = targetPRs.slice(i, i + concurrency);
-    const results = await Promise.all(
-      batch.map(async (pr) => {
-        const data = await safeFetch(pr.pull_request.url);
-        if (!data) return 0;
-        return (data.additions || 0) + (data.deletions || 0);
-      })
-    );
-
+    const results = await Promise.all(batch.map(async (pr) => {
+      const data = await safeFetch(pr.pull_request.url);
+      return data ? (data.additions || 0) + (data.deletions || 0) : 0;
+    }));
     totalChanged += results.reduce((sum, v) => sum + v, 0);
   }
-
   return totalChanged;
 }
 
-/**
- * Fetch user languages.
- */
 async function fetchUserLanguages(username) {
-  let page = 1;
-  const langMap = {};
-  let totalBytes = 0;
-
-  while (page <= 3) {
-    const url = `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?per_page=100&page=${page}&type=owner&sort=updated`;
-    const repos = await safeFetch(url);
-    if (!repos || !repos.length) break;
-
-    const promises = repos
-      .filter((r) => !r.fork && r.size > 0)
-      .slice(0, 20)
-      .map(async (repo) => {
-        return await safeFetch(repo.languages_url) || {};
-      });
-
-    const results = await Promise.all(promises);
-
-    for (const langs of results) {
-      for (const [lang, bytes] of Object.entries(langs)) {
-        langMap[lang] = (langMap[lang] || 0) + bytes;
-        totalBytes += bytes;
-      }
-    }
-
-    if (repos.length < 100) break;
-    page++;
-  }
-
-  const languages = Object.entries(langMap)
-    .map(([name, bytes]) => ({
-      name,
-      bytes,
-      percentage: totalBytes > 0 ? Math.round(((bytes / totalBytes) * 100) * 100) / 100 : 0,
-    }))
-    .sort((a, b) => b.bytes - a.bytes);
-
-  return { languages, totalBytes };
+  return await fetchUserLanguagesByRepos(username);
 }
 
 async function fetchUserLanguagesByRepos(username) {
   let page = 1;
   const langRepoCount = {};
   let totalRepos = 0;
-
-  while (page <= 3) {
-    const url = `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?per_page=100&page=${page}&type=owner&sort=updated`;
-    const repos = await safeFetch(url);
-    if (!repos || !repos.length) break;
-
-    for (const repo of repos) {
-      if (repo.fork || repo.size <= 0) continue;
-      const lang = repo.language;
-      if (lang) {
-        langRepoCount[lang] = (langRepoCount[lang] || 0) + 1;
-        totalRepos++;
+  try {
+    while (page <= 2) {
+      const url = `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?per_page=100&page=${page}&type=owner&sort=updated`;
+      const repos = await safeFetch(url);
+      if (!repos || !repos.length) break;
+      for (const repo of repos) {
+        if (repo.fork) continue;
+        const lang = repo.language;
+        if (lang) {
+          langRepoCount[lang] = (langRepoCount[lang] || 0) + 1;
+          totalRepos++;
+        }
       }
+      if (repos.length < 100) break;
+      page++;
     }
-
-    if (repos.length < 100) break;
-    page++;
-  }
+  } catch (e) {}
 
   const languages = Object.entries(langRepoCount)
     .map(([name, count]) => ({
@@ -380,52 +257,71 @@ async function fetchUserLanguagesByRepos(username) {
     }))
     .sort((a, b) => b.count - a.count);
 
-  return { languages, totalRepos };
+  return { languages, totalRepos, totalBytes: totalRepos * 1024 };
 }
 
 async function fetchUserLanguagesByCommits(username) {
   let page = 1;
   const langActivity = {};
   let totalActivity = 0;
-
-  while (page <= 3) {
-    const url = `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?per_page=100&page=${page}&type=owner&sort=updated`;
-    const repos = await safeFetch(url);
-    if (!repos || !repos.length) break;
-
-    const promises = repos
-      .filter((r) => !r.fork && r.size > 0)
-      .slice(0, 20)
-      .map(async (repo) => {
-        const langs = await safeFetch(repo.languages_url);
-        if (!langs) return { langs: {}, weight: 1 };
-        const weight = 1 + (repo.stargazers_count || 0) * 0.1;
-        return { langs, weight };
-      });
-
-    const results = await Promise.all(promises);
-
-    for (const { langs, weight } of results) {
-      for (const [lang, bytes] of Object.entries(langs)) {
-        const activity = bytes * weight;
-        langActivity[lang] = (langActivity[lang] || 0) + activity;
-        totalActivity += activity;
+  try {
+    while (page <= 2) {
+      const url = `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?per_page=100&page=${page}&type=owner&sort=updated`;
+      const repos = await safeFetch(url);
+      if (!repos || !repos.length) break;
+      for (const repo of repos) {
+        if (repo.fork) continue;
+        const lang = repo.language;
+        if (lang) {
+          const weight = 1 + (repo.stargazers_count || 0);
+          langActivity[lang] = (langActivity[lang] || 0) + weight;
+          totalActivity += weight;
+        }
       }
+      if (repos.length < 100) break;
+      page++;
     }
-
-    if (repos.length < 100) break;
-    page++;
-  }
+  } catch (e) {}
 
   const languages = Object.entries(langActivity)
-    .map(([name, activity]) => ({
+    .map(([name, weight]) => ({
       name,
-      activity: Math.round(activity),
-      percentage: totalActivity > 0 ? Math.round((activity / totalActivity) * 10000) / 100 : 0,
+      activity: weight,
+      percentage: totalActivity > 0 ? Math.round((weight / totalActivity) * 10000) / 100 : 0,
     }))
     .sort((a, b) => b.activity - a.activity);
 
   return { languages, totalActivity };
+}
+
+async function fetchUserCommitTimestamps(username) {
+  const perPage = 100;
+  let page = 1;
+  let allCommits = [];
+  try {
+    while (page <= 2) { // Heavily limited
+      const url = `${GITHUB_API}/search/commits?q=author:${encodeURIComponent(username)}&per_page=${perPage}&page=${page}&sort=author-date`;
+      const data = await safeFetch(url, { headers: { Accept: "application/vnd.github.cloak-preview" } });
+      if (!data || !data.items || data.items.length === 0) break;
+      for (const commit of data.items) {
+        if (commit.commit?.author?.date) {
+          allCommits.push({ timestamp: new Date(commit.commit.author.date).getTime() });
+        }
+      }
+      if (data.items.length < perPage) break;
+      page++;
+    }
+  } catch (e) {}
+
+  if (allCommits.length === 0) return { totalWorkingHours: 0, commitCount: 0 };
+  allCommits.sort((a, b) => a.timestamp - b.timestamp);
+  const MAX_GAP = 5 * 60 * 60 * 1000;
+  let totalWorkingMs = 0;
+  for (let i = 0; i < allCommits.length - 1; i++) {
+    const gap = allCommits[i + 1].timestamp - allCommits[i].timestamp;
+    if (gap > 0 && gap < MAX_GAP) totalWorkingMs += gap;
+  }
+  return { totalWorkingHours: Math.round((totalWorkingMs / (1000 * 60 * 60)) * 100) / 100, commitCount: allCommits.length };
 }
 
 module.exports = {

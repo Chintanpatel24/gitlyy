@@ -11,7 +11,11 @@ const {
   fetchContributionData,
   fetchUserProfile,
   fetchUserLanguages,
-  fetchTotalCommitCount
+  fetchTotalCommitCount,
+  fetchUserIssues,
+  fetchOpenIssues,
+  fetchClosedIssues,
+  fetchMergedPullRequests
 } = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generateMasterCardSVG } = require("../src/svg-master");
@@ -43,16 +47,20 @@ module.exports = async (req, res) => {
 
     if (!data) {
       try {
-        const [prs, profile, contributionData, langData, totalCommits] = await Promise.all([
+        const [prs, profile, contributionData, langData, totalCommits, totalIssues, openIssues, closedIssues, mergedPRCount] = await Promise.all([
           fetchUserPullRequests(username),
-          fetchUserProfile(username).catch(() => ({ public_repos: 0 })),
+          fetchUserProfile(username),
           fetchContributionData(username),
           fetchUserLanguages(username),
-          fetchTotalCommitCount(username)
+          fetchTotalCommitCount(username),
+          fetchUserIssues(username),
+          fetchOpenIssues(username),
+          fetchClosedIssues(username),
+          fetchMergedPullRequests(username)
         ]);
 
-        // Calculate streaks
-        const sortedDays = [...contributionData.days].sort((a, b) => a.date.localeCompare(b.date));
+        const days = contributionData?.days || [];
+        const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
         let currentStreak = 0;
         let longestStreak = 0;
         let tempStreak = 0;
@@ -66,9 +74,8 @@ module.exports = async (req, res) => {
           else tempStreak = 0;
         }
 
-        // Top repos by PR count
         const repoMap = {};
-        prs.forEach(pr => {
+        (prs || []).forEach(pr => {
           if (pr.repository_url) {
             const name = pr.repository_url.split("/repos/")[1];
             repoMap[name] = (repoMap[name] || 0) + 1;
@@ -79,24 +86,43 @@ module.exports = async (req, res) => {
           .sort((a, b) => b.count - a.count);
 
         data = {
-          username: profile.login || username,
-          totalPRs: prs.length,
-          openPRs: prs.filter(pr => pr.state === "open").length,
-          repoCount: profile.public_repos || 0,
-          languages: langData.languages,
-          contributions: contributionData.totalContributions,
+          username: profile?.login || username,
+          totalPRs: prs?.length || 0,
+          openPRs: (prs || []).filter(pr => pr.state === "open").length,
+          mergedPRs: mergedPRCount || 0,
+          repoCount: profile?.public_repos || 0,
+          languages: langData?.languages || [],
+          contributions: contributionData?.totalContributions || 0,
           repoList,
-          contributionDays: contributionData.days,
+          contributionDays: days,
           currentStreak,
           longestStreak,
-          totalCommits
+          totalCommits,
+          totalIssues: totalIssues || 0,
+          openIssues: openIssues || 0,
+          closedIssues: closedIssues || 0
         };
 
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
         console.error("Mastercard fetch error:", fetchErr.message);
-        res.status(200).send(errorSVG(`Could not fetch data for ${username}`));
-        return;
+        data = {
+          username: username,
+          totalPRs: 0,
+          openPRs: 0,
+          mergedPRs: 0,
+          repoCount: 0,
+          languages: [],
+          contributions: 0,
+          repoList: [],
+          contributionDays: [],
+          currentStreak: 0,
+          longestStreak: 0,
+          totalCommits: 0,
+          totalIssues: 0,
+          openIssues: 0,
+          closedIssues: 0
+        };
       }
     }
 
@@ -107,6 +133,7 @@ module.exports = async (req, res) => {
       username: data.username,
       totalPRs: data.totalPRs,
       openPRs: data.openPRs,
+      mergedPRs: data.mergedPRs,
       repoCount: data.repoCount,
       languages: data.languages,
       contributions: data.contributions,
@@ -115,6 +142,9 @@ module.exports = async (req, res) => {
       contributionDays: data.contributionDays,
       currentStreak: data.currentStreak,
       longestStreak: data.longestStreak,
+      totalIssues: data.totalIssues,
+      openIssues: data.openIssues,
+      closedIssues: data.closedIssues,
       colors,
       hideBorder: hide_border === "true",
     });

@@ -41,7 +41,8 @@ module.exports = async (req, res) => {
           fetchContributionData(username),
           fetchTotalCommitCount(username),
         ]);
-        const { days, totalContributions } = contributionData;
+
+        const { days = [], totalContributions = 0 } = contributionData || {};
 
         const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
         let currentStreak = 0;
@@ -61,8 +62,7 @@ module.exports = async (req, res) => {
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
         console.error("Streak fetch error:", fetchErr.message);
-        res.status(200).send(errorSVG(`Could not fetch data for ${username}`));
-        return;
+        data = { currentStreak: 0, longestStreak: 0, totalContributions: 0, totalCommits: 0 };
       }
     }
 

@@ -43,16 +43,15 @@ module.exports = async (req, res) => {
         const commitData = await fetchUserCommitTimestamps(username);
 
         cachedData = {
-          totalHours: commitData.totalWorkingHours,
-          commitCount: commitData.commitCount,
+          totalHours: commitData ? commitData.totalWorkingHours : 0,
+          commitCount: commitData ? commitData.commitCount : 0,
           lastUpdated: new Date(),
         };
 
         setCache(cacheKey, cachedData, CACHE_TTL);
       } catch (fetchErr) {
         console.error("Working Hours fetch error:", fetchErr.message);
-        res.status(200).send(errorSVG(`Could not fetch data for ${username}`));
-        return;
+        cachedData = { totalHours: 0, commitCount: 0, lastUpdated: new Date() };
       }
     }
 
