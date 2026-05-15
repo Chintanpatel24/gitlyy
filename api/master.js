@@ -15,7 +15,9 @@ const {
   fetchUserIssues,
   fetchOpenIssues,
   fetchClosedIssues,
-  fetchMergedPullRequests
+  fetchMergedPullRequests,
+  fetchUserTotalStars,
+  fetchRecentPRLinesChanged
 } = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generateMasterCardSVG } = require("../src/svg-master");
@@ -37,7 +39,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const cacheKey = `master:${username.toLowerCase()}`;
+    const cacheKey = `master_full:${username.toLowerCase()}`;
 
     if (refresh === "true") {
       clearCache(cacheKey);
@@ -47,7 +49,11 @@ module.exports = async (req, res) => {
 
     if (!data) {
       try {
-        const [prs, profile, contributionData, langData, totalCommits, totalIssues, openIssues, closedIssues, mergedPRCount] = await Promise.all([
+        const [
+          prs, profile, contributionData, langData,
+          totalCommits, totalIssues, openIssues, closedIssues,
+          mergedPRCount, totalStars
+        ] = await Promise.all([
           fetchUserPullRequests(username),
           fetchUserProfile(username),
           fetchContributionData(username),
@@ -56,8 +62,11 @@ module.exports = async (req, res) => {
           fetchUserIssues(username),
           fetchOpenIssues(username),
           fetchClosedIssues(username),
-          fetchMergedPullRequests(username)
+          fetchMergedPullRequests(username),
+          fetchUserTotalStars(username)
         ]);
+
+        const linesChanged = await fetchRecentPRLinesChanged(prs, 15);
 
         const days = contributionData?.days || [];
         const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
@@ -100,12 +109,14 @@ module.exports = async (req, res) => {
           totalCommits,
           totalIssues: totalIssues || 0,
           openIssues: openIssues || 0,
-          closedIssues: closedIssues || 0
+          closedIssues: closedIssues || 0,
+          totalStars: totalStars || 0,
+          linesChanged: linesChanged || 0
         };
 
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
-        console.error("Mastercard fetch error:", fetchErr.message);
+        console.error("Mastercard Full fetch error:", fetchErr.message);
         data = {
           username: username,
           totalPRs: 0,
@@ -121,7 +132,9 @@ module.exports = async (req, res) => {
           totalCommits: 0,
           totalIssues: 0,
           openIssues: 0,
-          closedIssues: 0
+          closedIssues: 0,
+          totalStars: 0,
+          linesChanged: 0
         };
       }
     }
@@ -130,35 +143,21 @@ module.exports = async (req, res) => {
     colors = applyColorOverrides(colors, { bg_color, title_color, text_color, border_color });
 
     const svg = generateMasterCardSVG({
-      username: data.username,
-      totalPRs: data.totalPRs,
-      openPRs: data.openPRs,
-      mergedPRs: data.mergedPRs,
-      repoCount: data.repoCount,
-      languages: data.languages,
-      contributions: data.contributions,
-      totalCommits: data.totalCommits,
-      repoList: data.repoList,
-      contributionDays: data.contributionDays,
-      currentStreak: data.currentStreak,
-      longestStreak: data.longestStreak,
-      totalIssues: data.totalIssues,
-      openIssues: data.openIssues,
-      closedIssues: data.closedIssues,
+      ...data,
       colors,
       hideBorder: hide_border === "true",
     });
 
     res.status(200).send(svg);
   } catch (error) {
-    console.error("Mastercard Error:", error.message);
-    res.status(200).send(errorSVG("Failed to load dashboard data"));
+    console.error("Mastercard Full Error:", error.message);
+    res.status(200).send(errorSVG("Failed to load full dashboard data"));
   }
 };
 
 function errorSVG(msg) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="120" viewBox="0 0 600 120">
-    <rect width="600" height="120" fill="#0d1117" rx="8"/>
-    <text x="300" y="65" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" fill="#f85149">${msg}</text>
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="820" height="120" viewBox="0 0 820 120">
+    <rect width="820" height="120" fill="#0d1117" rx="8"/>
+    <text x="410" y="65" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" fill="#f85149">${msg}</text>
   </svg>`;
 }
