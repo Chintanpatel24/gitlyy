@@ -14,7 +14,7 @@
 
 ---
 > ## Custom GitHub stats cards for your README. Real data. No auth required.
-> use https://gitlyy-two.vercel.app/ for new card testings
+
 ### 1. Profile Card
 
 - Shows user info: avatar, name, bio, join date, repos, followers, and following.
