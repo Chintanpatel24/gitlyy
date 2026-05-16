@@ -18,7 +18,7 @@ const {
   fetchMergedPullRequests,
   fetchUserTotalStars,
   fetchRecentPRLinesChanged,
-  fetchOpenPullRequests // Added this
+  fetchOpenPullRequests
 } = require("../src/github");
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generateMasterCardSVG } = require("../src/svg-master");
@@ -40,7 +40,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const cacheKey = `master_full_v3:${username.toLowerCase()}`;
+    const cacheKey = `master_ultimate_v1:${username.toLowerCase()}`;
 
     if (refresh === "true") {
       clearCache(cacheKey);
@@ -85,6 +85,13 @@ module.exports = async (req, res) => {
           else tempStreak = 0;
         }
 
+        // Commit Ranking logic (by day of week)
+        const weekMap = { 0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 };
+        days.forEach(d => {
+           const dayOfWeek = new Date(d.date).getDay();
+           weekMap[dayOfWeek] += d.count;
+        });
+
         const repoMap = {};
         (prs || []).slice(0, 50).forEach(pr => {
           if (pr.repository_url) {
@@ -98,6 +105,7 @@ module.exports = async (req, res) => {
 
         data = {
           username: profile?.login || username,
+          name: profile?.name || profile?.login || username,
           totalPRs: prs?.length || 0,
           openPRs: openPRCount || 0,
           mergedPRs: mergedPRCount || 0,
@@ -113,18 +121,19 @@ module.exports = async (req, res) => {
           openIssues: openIssues || 0,
           closedIssues: closedIssues || 0,
           totalStars: totalStars || 0,
-          linesChanged: linesChanged || 0
+          linesChanged: linesChanged || 0,
+          weekMap
         };
 
         setCache(cacheKey, data, CACHE_TTL);
       } catch (fetchErr) {
-        console.error("Mastercard Optimized Fetch error:", fetchErr.message);
+        console.error("Mastercard Ultimate Fetch error:", fetchErr.message);
         data = {
-          username: username, totalPRs: 0, openPRs: 0, mergedPRs: 0,
+          username: username, name: username, totalPRs: 0, openPRs: 0, mergedPRs: 0,
           repoCount: 0, languages: [], contributions: 0, repoList: [],
           contributionDays: [], currentStreak: 0, longestStreak: 0,
           totalCommits: 0, totalIssues: 0, openIssues: 0, closedIssues: 0,
-          totalStars: 0, linesChanged: 0
+          totalStars: 0, linesChanged: 0, weekMap: {}
         };
       }
     }
@@ -146,8 +155,8 @@ module.exports = async (req, res) => {
 };
 
 function errorSVG(msg) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="820" height="120" viewBox="0 0 820 120">
-    <rect width="820" height="120" fill="#0d1117" rx="8"/>
-    <text x="410" y="65" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" fill="#f85149">${msg}</text>
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="830" height="120" viewBox="0 0 830 120">
+    <rect width="830" height="120" fill="#0d1117" rx="8"/>
+    <text x="415" y="65" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" fill="#f85149">${msg}</text>
   </svg>`;
 }
