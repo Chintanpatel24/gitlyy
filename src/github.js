@@ -7,7 +7,7 @@ const GITHUB_API = "https://api.github.com";
 /**
  * Robust fetch wrapper with timeout and better error handling
  */
-async function safeFetch(url, options = {}, timeout = 10000) {
+async function safeFetch(url, options = {}, timeout = 12000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -37,13 +37,20 @@ async function safeFetch(url, options = {}, timeout = 10000) {
 }
 
 /**
- * Fetch all pull requests by a user.
+ * Fetch all pull requests by a user across multiple pages.
  */
 async function fetchUserPullRequests(username) {
   const encUser = encodeURIComponent(username);
-  const url = `${GITHUB_API}/search/issues?q=author:${encUser}+type:pr&per_page=100&page=1`;
-  const data = await safeFetch(url);
-  return data?.items || [];
+  let allItems = [];
+  // Fetch up to 3 pages for better coverage
+  for (let page = 1; page <= 3; page++) {
+    const url = `${GITHUB_API}/search/issues?q=author:${encUser}+type:pr&per_page=100&page=${page}`;
+    const data = await safeFetch(url);
+    if (!data || !data.items || data.items.length === 0) break;
+    allItems = allItems.concat(data.items);
+    if (allItems.length >= data.total_count) break;
+  }
+  return allItems;
 }
 
 async function fetchOpenPullRequests(username) {
@@ -132,20 +139,37 @@ function parseContributionHTML(html) {
     totalContributions = parseInt(totalMatch[1].replace(/,/g, ""), 10);
   }
 
-  const entryRegex = /<(?:td|rect)\b[^>]*\bdata-date="(\d{4}-\d{2}-\d{2})"[^>]*data-level="(\d+)"[^>]*>/g;
   const dates = [];
+  // Match both <td> (old) and <rect> (new) elements with data-date and data-level
+  const entryRegex = /<(?:td|rect)\b[^>]*\bdata-date="(\d{4}-\d{2}-\d{2})"[^>]*data-level="(\d+)"[^>]*>/g;
   let match;
   while ((match = entryRegex.exec(html)) !== null) {
+    const tag = match[0];
+    const idMatch = tag.match(/\bid="([^"]+)"/);
     dates.push({
+      id: idMatch ? idMatch[1] : null,
       date: match[1],
       level: parseInt(match[2], 10),
       count: 0
     });
   }
 
+  // Exact count extraction from tooltips
+  const tipRegex = /<tool-tip[^>]*for="([^"]+)"[^>]*>([\s\S]*?)<\/tool-tip>/g;
+  const countMap = new Map();
+  while ((match = tipRegex.exec(html)) !== null) {
+    const tipId = match[1];
+    const tipText = match[2].replace(/\s+/g, " ").trim();
+    const countMatch = tipText.match(/(\d+)\s+contribution/i);
+    if (countMatch) {
+      countMap.set(tipId, parseInt(countMatch[1], 10));
+    }
+  }
+
   const days = dates.map(d => ({
-    ...d,
-    count: d.level * 2 // Fallback
+    date: d.date,
+    level: d.level,
+    count: d.id && countMap.has(d.id) ? countMap.get(d.id) : (d.level * 2)
   }));
 
   days.sort((a, b) => a.date.localeCompare(b.date));
@@ -165,13 +189,19 @@ async function fetchTotalCommitCount(username) {
 
 async function fetchUserTotalStars(username) {
   const encUser = encodeURIComponent(username);
-  const url = `${GITHUB_API}/users/${encUser}/repos?type=owner&per_page=100`;
-  const data = await safeFetch(url);
-  if (!Array.isArray(data)) return 0;
-  return data.reduce((sum, repo) => sum + (repo.stargazers_count || 0), 0);
+  let totalStars = 0;
+  // Fetch up to 3 pages of repos
+  for (let page = 1; page <= 3; page++) {
+    const url = `${GITHUB_API}/users/${encUser}/repos?type=owner&per_page=100&page=${page}`;
+    const data = await safeFetch(url);
+    if (!Array.isArray(data) || data.length === 0) break;
+    totalStars += data.reduce((sum, repo) => sum + (repo.stargazers_count || 0), 0);
+    if (data.length < 100) break;
+  }
+  return totalStars;
 }
 
-async function fetchRecentPRLinesChanged(prs, maxPRs = 5) {
+async function fetchRecentPRLinesChanged(prs, maxPRs = 10) {
   const targetPRs = (prs || []).filter((pr) => pr?.pull_request?.url).slice(0, maxPRs);
   if (targetPRs.length === 0) return 0;
 
@@ -210,16 +240,14 @@ async function fetchUserLanguages(username) {
     }))
     .sort((a, b) => b.count - a.count);
 
-  return { languages, totalRepos, totalBytes: totalRepos * 1024 }; // Mock totalBytes
+  return { languages, totalRepos, totalBytes: totalRepos * 1024 };
 }
 
-// RESTORED FUNCTIONS FOR COMPATIBILITY
 async function fetchUserLanguagesByRepos(username) {
   return await fetchUserLanguages(username);
 }
 
 async function fetchUserLanguagesByCommits(username) {
-  // Simple proxy to keep it working
   return await fetchUserLanguages(username);
 }
 
