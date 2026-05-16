@@ -2,8 +2,7 @@
  * Mastercard (Dashboard) Card
  * GET /api/master?username=xxx&hide_border=true
  *
- * Aggregates all user stats into a single dashboard card.
- * Auto-refreshes every 30 minutes.
+ * Aggregates all user stats into a single full-width dashboard card.
  */
 
 const {
@@ -26,6 +25,16 @@ const { getCache, setCache, clearCache } = require("../src/cache");
 
 const CACHE_TTL = 30 * 60 * 1000;
 
+// Safe wrapper to return default on failure
+const safe = async (promise, fallback) => {
+  try {
+    const result = await promise;
+    return result ?? fallback;
+  } catch (e) {
+    return fallback;
+  }
+};
+
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
@@ -40,102 +49,88 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const cacheKey = `master_ultimate_v1:${username.toLowerCase()}`;
-
-    if (refresh === "true") {
-      clearCache(cacheKey);
-    }
+    const cacheKey = `master_ultimate_v2:${username.toLowerCase()}`;
+    if (refresh === "true") clearCache(cacheKey);
 
     let data = getCache(cacheKey);
 
     if (!data) {
-      try {
-        const [
-          prs, profile, contributionData, langData,
-          totalCommits, totalIssues, openIssues, closedIssues,
-          mergedPRCount, totalStars, openPRCount
-        ] = await Promise.all([
-          fetchUserPullRequests(username),
-          fetchUserProfile(username),
-          fetchContributionData(username),
-          fetchUserLanguages(username),
-          fetchTotalCommitCount(username),
-          fetchUserIssues(username),
-          fetchOpenIssues(username),
-          fetchClosedIssues(username),
-          fetchMergedPullRequests(username),
-          fetchUserTotalStars(username),
-          fetchOpenPullRequests(username)
-        ]);
+      // Parallel fetch with individual error handling to prevent total failure
+      const [
+        prs, profile, contributionData, langData,
+        totalCommits, totalIssues, openIssues, closedIssues,
+        mergedPRCount, totalStars, openPRCount
+      ] = await Promise.all([
+        safe(fetchUserPullRequests(username), []),
+        safe(fetchUserProfile(username), { login: username, public_repos: 0 }),
+        safe(fetchContributionData(username), { totalContributions: 0, days: [] }),
+        safe(fetchUserLanguages(username), { languages: [], totalRepos: 0 }),
+        safe(fetchTotalCommitCount(username), 0),
+        safe(fetchUserIssues(username), 0),
+        safe(fetchOpenIssues(username), 0),
+        safe(fetchClosedIssues(username), 0),
+        safe(fetchMergedPullRequests(username), 0),
+        safe(fetchUserTotalStars(username), 0),
+        safe(fetchOpenPullRequests(username), 0)
+      ]);
 
-        const linesChanged = await fetchRecentPRLinesChanged(prs, 5);
+      const linesChanged = await safe(fetchRecentPRLinesChanged(prs, 3), 0);
 
-        const days = contributionData?.days || [];
-        const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
-        let currentStreak = 0;
-        let longestStreak = 0;
-        let tempStreak = 0;
+      const days = contributionData?.days || [];
+      const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
 
-        for (let i = sortedDays.length - 1; i >= 0; i--) {
-          if (sortedDays[i].count > 0) currentStreak++;
-          else if (i < sortedDays.length - 1) break;
-        }
-        for (const day of sortedDays) {
-          if (day.count > 0) { tempStreak++; longestStreak = Math.max(longestStreak, tempStreak); }
-          else tempStreak = 0;
-        }
-
-        // Commit Ranking logic (by day of week)
-        const weekMap = { 0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 };
-        days.forEach(d => {
-           const dayOfWeek = new Date(d.date).getDay();
-           weekMap[dayOfWeek] += d.count;
-        });
-
-        const repoMap = {};
-        (prs || []).slice(0, 50).forEach(pr => {
-          if (pr.repository_url) {
-            const name = pr.repository_url.split("/repos/")[1];
-            repoMap[name] = (repoMap[name] || 0) + 1;
-          }
-        });
-        const repoList = Object.entries(repoMap)
-          .map(([name, count]) => ({ name, count }))
-          .sort((a, b) => b.count - a.count);
-
-        data = {
-          username: profile?.login || username,
-          name: profile?.name || profile?.login || username,
-          totalPRs: prs?.length || 0,
-          openPRs: openPRCount || 0,
-          mergedPRs: mergedPRCount || 0,
-          repoCount: profile?.public_repos || 0,
-          languages: langData?.languages || [],
-          contributions: contributionData?.totalContributions || 0,
-          repoList,
-          contributionDays: days,
-          currentStreak,
-          longestStreak,
-          totalCommits,
-          totalIssues: totalIssues || 0,
-          openIssues: openIssues || 0,
-          closedIssues: closedIssues || 0,
-          totalStars: totalStars || 0,
-          linesChanged: linesChanged || 0,
-          weekMap
-        };
-
-        setCache(cacheKey, data, CACHE_TTL);
-      } catch (fetchErr) {
-        console.error("Mastercard Ultimate Fetch error:", fetchErr.message);
-        data = {
-          username: username, name: username, totalPRs: 0, openPRs: 0, mergedPRs: 0,
-          repoCount: 0, languages: [], contributions: 0, repoList: [],
-          contributionDays: [], currentStreak: 0, longestStreak: 0,
-          totalCommits: 0, totalIssues: 0, openIssues: 0, closedIssues: 0,
-          totalStars: 0, linesChanged: 0, weekMap: {}
-        };
+      let currentStreak = 0;
+      let longestStreak = 0;
+      let tempStreak = 0;
+      for (let i = sortedDays.length - 1; i >= 0; i--) {
+        if (sortedDays[i].count > 0) currentStreak++;
+        else if (i < sortedDays.length - 1) break;
       }
+      for (const day of sortedDays) {
+        if (day.count > 0) { tempStreak++; longestStreak = Math.max(longestStreak, tempStreak); }
+        else tempStreak = 0;
+      }
+
+      const weekMap = { 0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0 };
+      days.forEach(d => {
+         const dayOfWeek = new Date(d.date).getDay();
+         weekMap[dayOfWeek] += d.count;
+      });
+
+      const repoMap = {};
+      (prs || []).forEach(pr => {
+        if (pr.repository_url) {
+          const name = pr.repository_url.split("/repos/")[1];
+          repoMap[name] = (repoMap[name] || 0) + 1;
+        }
+      });
+      const repoList = Object.entries(repoMap)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count);
+
+      data = {
+        username: profile.login || username,
+        name: profile.name || profile.login || username,
+        totalPRs: prs.length || 0,
+        openPRs: openPRCount || 0,
+        mergedPRs: mergedPRCount || 0,
+        repoCount: profile.public_repos || 0,
+        languages: langData.languages || [],
+        contributions: contributionData.totalContributions || 0,
+        repoList,
+        contributionDays: days,
+        currentStreak,
+        longestStreak,
+        totalCommits,
+        totalIssues: totalIssues || 0,
+        openIssues: openIssues || 0,
+        closedIssues: closedIssues || 0,
+        totalStars: totalStars || 0,
+        linesChanged: linesChanged || 0,
+        weekMap
+      };
+
+      setCache(cacheKey, data, CACHE_TTL);
     }
 
     let colors = getTheme(theme);
@@ -150,7 +145,7 @@ module.exports = async (req, res) => {
     res.status(200).send(svg);
   } catch (error) {
     console.error("Mastercard API Error:", error.message);
-    res.status(200).send(errorSVG("Failed to load dashboard"));
+    res.status(200).send(errorSVG("Failed to load dashboard data"));
   }
 };
 
