@@ -101,7 +101,7 @@
 ### 6. Streak Card
 
 I. Current and longest contribution streaks with fire visual and progress bar.
-
+> it's not working 
 <img src="images/8.png">
 
 ```html
@@ -109,7 +109,7 @@ I. Current and longest contribution streaks with fire visual and progress bar.
 ```
 
 II. **Compact** (total, current streak, longest streak):
-
+> it's working !!
 <img src="images/3.png">
 
 ```html
