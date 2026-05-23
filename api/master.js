@@ -74,7 +74,7 @@ module.exports = async (req, res) => {
         safe(fetchOpenPullRequests(username), 0)
       ]);
 
-      const linesChanged = await safe(fetchRecentPRLinesChanged(prs, 3), 0);
+      const linesChanged = await safe(fetchRecentPRLinesChanged(prs, 10), 0);
 
       const days = contributionData?.days || [];
       const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
@@ -82,10 +82,28 @@ module.exports = async (req, res) => {
       let currentStreak = 0;
       let longestStreak = 0;
       let tempStreak = 0;
+
+      // Corrected streak logic: find last day with activity and check if it's today/yesterday
+      const today = new Date().toISOString().split('T')[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+      let lastActiveIndex = -1;
       for (let i = sortedDays.length - 1; i >= 0; i--) {
-        if (sortedDays[i].count > 0) currentStreak++;
-        else if (i < sortedDays.length - 1) break;
+        if (sortedDays[i].count > 0) {
+          if (sortedDays[i].date === today || sortedDays[i].date === yesterday) {
+            lastActiveIndex = i;
+          }
+          break;
+        }
       }
+
+      if (lastActiveIndex !== -1) {
+        for (let i = lastActiveIndex; i >= 0; i--) {
+          if (sortedDays[i].count > 0) currentStreak++;
+          else break;
+        }
+      }
+
       for (const day of sortedDays) {
         if (day.count > 0) { tempStreak++; longestStreak = Math.max(longestStreak, tempStreak); }
         else tempStreak = 0;
@@ -111,6 +129,12 @@ module.exports = async (req, res) => {
       data = {
         username: profile.login || username,
         name: profile.name || profile.login || username,
+        avatarUrl: profile.avatar_url || "",
+        bio: profile.bio || "",
+        location: profile.location || "",
+        company: profile.company || "",
+        followers: profile.followers || 0,
+        following: profile.following || 0,
         totalPRs: prs.length || 0,
         openPRs: openPRCount || 0,
         mergedPRs: mergedPRCount || 0,
