@@ -169,10 +169,31 @@ II. **Compact** (total, current streak, longest streak):
 
 - A retro-style music player for your README.
 - **Styles:** `90s` (Winamp), `ipod`, `cassette`, `boombox`.
-- Supports custom song titles, artists, and Spotify track IDs.
+- Supports custom song titles, artists, Spotify track IDs, and custom GIFs.
 
+#### I. Winamp (90s)
 ```html
-<img src="https://gitlyy.vercel.app/api/music?title=Your+Song&artist=Artist&player=90s&track_id=TRACK_ID"/>
+<img src="https://gitlyy.vercel.app/api/music?player=90s&title=Still+D.R.E.&artist=Dr.+Dre&track_id=503O67r8Oayr8mYv2of9nu"/>
+```
+
+#### II. iPod
+```html
+<img src="https://gitlyy.vercel.app/api/music?player=ipod&title=Blinding+Lights&artist=The+Weeknd&track_id=0VjIj9S91pI9pX8pY8pY"/>
+```
+
+#### III. Cassette
+```html
+<img src="https://gitlyy.vercel.app/api/music?player=cassette&title=Bohemian+Rhapsody&artist=Queen"/>
+```
+
+#### IV. Boombox
+```html
+<img src="https://gitlyy.vercel.app/api/music?player=boombox&title=Harder+Better+Faster+Stronger&artist=Daft+Punk"/>
+```
+
+#### V. With Custom GIF
+```html
+<img src="https://gitlyy.vercel.app/api/music?player=90s&gif_url=https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp3eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/l41lTfuxV6M0S8hdm/giphy.gif"/>
 ```
 
 ---
