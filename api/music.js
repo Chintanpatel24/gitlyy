@@ -13,7 +13,6 @@ module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=1800");
 
   const {
-    username,
     theme,
     hide_border,
     bg_color,
@@ -27,18 +26,15 @@ module.exports = async (req, res) => {
     gif_url
   } = req.query;
 
-  // username is not strictly required for this card as it's purely decorative/user-defined music,
-  // but we keep it for consistency with other endpoints if needed.
-
   try {
     let colors = getTheme(theme);
     colors = applyColorOverrides(colors, { bg_color, title_color, text_color, border_color });
 
     const svg = generateMusicSVG({
       player: player || "90s",
-      title: title || "Not Playing",
-      artist: artist || "Unknown Artist",
-      track_id: track_id || "",
+      title: title,
+      artist: artist,
+      track_id: track_id,
       gif_url: gif_url || "",
       colors,
       hideBorder: hide_border === "true",
