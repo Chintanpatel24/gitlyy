@@ -165,23 +165,14 @@ II. **Compact** (total, current streak, longest streak):
 
 ---
 
-### 9. Working Hours
+### 9. Music Player Card
 
-- Calculates actual coding hours by analyzing commit timestamp gaps.
-
-<img src="images/13.png">
-
-**Formula:** `TWt = Σ (Ti+1 - Ti) for all i where (Ti+1 - Ti) < 5 hours`
-
-Where:
-- `TWt` = Total Working Time
-- `Σ` = Sum of all
-- `Ti` = Timestamp of commit i
-- `Ti+1` = Timestamp of next commit
-- **Threshold:** Only counts gaps < 5 hours (assumes longer gaps are breaks/sleep)
+- A retro-style music player for your README.
+- **Styles:** `90s` (Winamp), `ipod`, `cassette`, `boombox`.
+- Supports custom song titles, artists, and Spotify track IDs.
 
 ```html
-<img src="https://gitlyy.vercel.app/api/working-hours?username=YOUR_USERNAME&hide_border=true"/>
+<img src="https://gitlyy.vercel.app/api/music?title=Your+Song&artist=Artist&player=90s&track_id=TRACK_ID"/>
 ```
 
 ---
@@ -252,7 +243,7 @@ Copy any card URL and replace `YOUR_USERNAME` with your GitHub username:
 | `/api/commits` | Commits ranking | `default`, `compact` | 30 min |
 | `/api/pr-stats` | Pull request stats | `default`, `compact` | 30 min |
 | `/api/issues` | Issues stats | - | 30 min |
-| `/api/working-hours` | Estimated coding hours | - | 2 hours |
+| `/api/music` | Retro Music Player | - | 1 hour |
 | `/api/overview` | Overall stats summary | - | 30 min |
 
 ---
@@ -275,6 +266,11 @@ All endpoints support these query parameters:
 | `max_langs` | Max languages shown | `15` |
 | `lines_scope` | Overview lines-changed source (`recent` or `all`) | `recent` |
 | `max_prs` | PR limit for overview when `lines_scope=recent` (1-200, default 30) | `50` |
+| `player` | Music player style (`90s`, `ipod`, `cassette`, `boombox`) | `ipod` |
+| `title` | Song title for music card | `Lofi+Hip+Hop` |
+| `artist` | Artist name for music card | `Lofi+Girl` |
+| `track_id` | Spotify Track ID | `4cOdK2wG6S999UI9797` |
+| `gif_url` | Custom GIF URL for music card | `https://example.com/playing.gif` |
 | `refresh` | Force data refresh | `true` |
 
 ---
@@ -321,7 +317,7 @@ Cards automatically update based on data type:
 | Data | Cache Duration |
 |------|---------------|
 | Contributions, PRs, Languages, Commits, Streak, Overview | 30 minutes |
-| Profile, Working Hours | 2 hours |
+| Profile | 2 hours |
 
 Data is cached server-side. CDN caches the response. Stale content is served while refreshing in the background.
 
