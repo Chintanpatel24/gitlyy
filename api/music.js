@@ -5,11 +5,11 @@
 
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generateMusicSVG } = require("../src/svg-music");
+const { sendResponse } = require("../src/response");
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
-  res.setHeader("Content-Type", "image/svg+xml");
   res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=1800");
 
   const {
@@ -40,10 +40,10 @@ module.exports = async (req, res) => {
       hideBorder: hide_border === "true",
     });
 
-    res.status(200).send(svg);
+    sendResponse(req, res, svg);
   } catch (error) {
     console.error("Music Card Error:", error.message);
-    res.status(200).send(errorSVG("Failed to load music card"));
+    sendResponse(req, res, errorSVG("Failed to load music card"), 200);
   }
 };
 

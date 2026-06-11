@@ -17,6 +17,7 @@ const {
 const { getTheme, applyColorOverrides } = require("../src/themes");
 const { generateOverviewSVG } = require("../src/svg-overview");
 const { getCache, setCache, clearCache } = require("../src/cache");
+const { sendResponse } = require("../src/response");
 
 const CACHE_TTL = 30 * 60 * 1000;
 
@@ -35,13 +36,12 @@ function parseMaxPRs(value, defaultValue = 20, hardLimit = 50) {
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
-  res.setHeader("Content-Type", "image/svg+xml");
   res.setHeader("Cache-Control", "public, max-age=1800, s-maxage=1800, stale-while-revalidate=600");
 
   const { username, theme, hide_border, bg_color, title_color, text_color, border_color, refresh, lines_scope, max_prs } = req.query;
 
   if (!username) {
-    res.status(400).send(errorSVG("Missing username"));
+    sendResponse(req, res, errorSVG("Missing username"), 400);
     return;
   }
 
@@ -114,10 +114,10 @@ module.exports = async (req, res) => {
       hideBorder: hide_border === "true",
     });
 
-    res.status(200).send(svg);
+    sendResponse(req, res, svg);
   } catch (error) {
     console.error("Overview Error:", error.message);
-    res.status(200).send(errorSVG("Failed to load overview data"));
+    sendResponse(req, res, errorSVG("Failed to load overview data"), 200);
   }
 };
 

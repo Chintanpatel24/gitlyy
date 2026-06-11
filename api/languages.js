@@ -19,13 +19,13 @@ const {
   generateLanguageDonutByCommitsSVG,
 } = require("../src/svg-language");
 const { getCache, setCache, clearCache } = require("../src/cache");
+const { sendResponse } = require("../src/response");
 
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET");
-  res.setHeader("Content-Type", "image/svg+xml");
   res.setHeader("Cache-Control", "public, max-age=1800, s-maxage=1800, stale-while-revalidate=600");
 
   const {
@@ -43,7 +43,7 @@ module.exports = async (req, res) => {
   } = req.query;
 
   if (!username) {
-    res.status(400).send(errorSVG("Missing username"));
+    sendResponse(req, res, errorSVG("Missing username"), 400);
     return;
   }
 
@@ -108,10 +108,10 @@ module.exports = async (req, res) => {
             });
     }
 
-    res.status(200).send(svg);
+    sendResponse(req, res, svg);
   } catch (error) {
     console.error("Language Error:", error.message);
-    res.status(200).send(errorSVG("Failed to load language data"));
+    sendResponse(req, res, errorSVG("Failed to load language data"), 200);
   }
 };
 
