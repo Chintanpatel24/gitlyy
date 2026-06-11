@@ -48,7 +48,7 @@ function sendResponse(req, res, svg, status = 200) {
         .footer a:hover {
             text-decoration: underline;
         }
-        svg {
+        img {
             max-width: 100%;
             height: auto;
             filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
@@ -57,7 +57,7 @@ function sendResponse(req, res, svg, status = 200) {
 </head>
 <body>
     <div class="container">
-        ${svg}
+        <img src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}" alt="Gitlyy card" />
     </div>
     <div class="footer">
         This is a <a href="https://github.com/Chintanpatel24/gitlyy" target="_blank">gitlyy</a> a readme stats generator.
