@@ -1,13 +1,42 @@
 /**
- * Utility to send SVG response or an HTML wrapper based on the Accept header.
+ * Utility to send SVG response or an HTML wrapper based on the request context.
  */
 
 function sendResponse(req, res, svg, status = 200) {
   const accept = req.headers.accept || "";
+  const userAgent = req.headers["user-agent"] || "";
+  const secFetchDest = req.headers["sec-fetch-dest"] || "";
+  const { format } = req.query || {};
 
-  if (accept.includes("text/html")) {
+  // Force SVG if format=svg is requested
+  if (format === "svg") {
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.status(status).send(svg);
+    return;
+  }
+
+  // Detect if the request is from GitHub's proxy (Camo)
+  // GitHub Camo uses "github-camo" in the user agent.
+  const isGithubCamo = userAgent.toLowerCase().includes("github-camo");
+
+  // Modern browsers send sec-fetch-dest: image when loading <img> tags
+  // and sec-fetch-dest: document when opening in a new tab.
+  const isImageRequest = secFetchDest === "image" || (accept.includes("image/svg+xml") && !accept.includes("text/html"));
+
+  // We serve HTML only if:
+  // 1. It's NOT from GitHub Camo
+  // 2. It's NOT an explicit image request from a browser
+  // 3. The client explicitly accepts text/html (browser navigation)
+  let serveHtml = !isGithubCamo && !isImageRequest && accept.includes("text/html");
+
+  // Extra safety: if sec-fetch-dest is "document", it's definitely a browser navigation
+  if (secFetchDest === "document") {
+    serveHtml = true;
+  }
+
+  if (serveHtml) {
     res.setHeader("Content-Type", "text/html");
-    res.setHeader("Vary", "Accept");
+    res.setHeader("Vary", "Accept, Sec-Fetch-Dest");
     const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -67,7 +96,7 @@ function sendResponse(req, res, svg, status = 200) {
     res.status(status).send(html);
   } else {
     res.setHeader("Content-Type", "image/svg+xml");
-    res.setHeader("Vary", "Accept");
+    res.setHeader("Vary", "Accept, Sec-Fetch-Dest");
     res.status(status).send(svg);
   }
 }
