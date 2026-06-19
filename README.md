@@ -25,27 +25,7 @@
 <img src="https://gitlyy.vercel.app/api/profile?username=YOUR_USERNAME&hide_border=true"/>
 ```
 
----
 
-### 4. Contribution Numbers
-
- I. GitHub-style contribution heatmap with daily commit counts.
-
-<img src="images/2.png">
-
-```html
-<img src="https://gitlyy.vercel.app/api/contribution?username=YOUR_USERNAME&hide_border=true"/>
-```
-
- II. **Pulse** (monthly bars + 30-day trend):
- 
- <img src="images/4.png">
- 
-```html
-<img src="https://gitlyy.vercel.app/api/contribution?username=YOUR_USERNAME&layout=pulse&hide_border=true"/>
-```
-
----
 
 ### 2. Mastercard (Dashboard)
 > Under active devlopment !!
@@ -67,7 +47,27 @@
 ```html
 <img src="https://gitlyy.vercel.app/api/issues?username=YOUR_USERNAME&hide_border=true"/>
 ```
+---
 
+### 4. Contribution Numbers
+
+ I. GitHub-style contribution heatmap with daily commit counts.
+
+<img src="images/2.png">
+
+```html
+<img src="https://gitlyy.vercel.app/api/contribution?username=YOUR_USERNAME&hide_border=true"/>
+```
+
+ II. **Pulse** (monthly bars + 30-day trend):
+ 
+ <img src="images/4.png">
+ 
+```html
+<img src="https://gitlyy.vercel.app/api/contribution?username=YOUR_USERNAME&layout=pulse&hide_border=true"/>
+```
+
+---
 ---
 
 ### 5. Language Usage
