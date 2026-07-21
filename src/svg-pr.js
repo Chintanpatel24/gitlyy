@@ -58,8 +58,8 @@ function generatePRCardSVG(options) {
   </g>
   <g transform="translate(${pad},38)">
     <text x="0" y="0" class="s" fill="#${accentColor}">Merged: ${mergedPRs}</text>
-    <text x="90" y="0" class="s" fill="#${accentColor}">Closed: ${closedPRs}</text>
-    <text x="180" y="0" class="s" fill="#3fb950">Open: ${openPRs}</text>
+    <text x="130" y="0" class="s" fill="#${accentColor}">Closed: ${closedPRs}</text>
+    <text x="260" y="0" class="s" fill="#3fb950">Open: ${openPRs}</text>
   </g>
   <line x1="${pad}" y1="${hdr - 4}" x2="${cardWidth - pad}" y2="${hdr - 4}" stroke="#30363d" stroke-width=".5"/>
   ${rows}

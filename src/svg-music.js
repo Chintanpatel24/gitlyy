@@ -51,19 +51,53 @@ function generateMusicSVG(options) {
 
   let playerContent = "";
   let styleTags = `
-    .title { font: 700 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; fill: #${titleColor}; }
-    .artist { font: 400 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; fill: #${textColor}; }
-    @keyframes bar {
-      0%, 100% { height: 4px; }
-      50% { height: 20px; }
-    }
-    .bar { fill: #${accentColor}; animation: bar 1s infinite ease-in-out; }
-    .bar1 { animation-delay: 0s; }
-    .bar2 { animation-delay: 0.15s; }
-    .bar3 { animation-delay: 0.3s; }
-    .bar4 { animation-delay: 0.45s; }
-    .bar5 { animation-delay: 0.6s; }
+    /* General Styles */
     .glow { filter: drop-shadow(0 0 3px #${accentColor}); }
+
+    /* Winamp (90s) Styles */
+    .winamp-title { font: 700 14px monospace; fill: #00ff00; }
+    .winamp-artist { font: 400 12px monospace; fill: #00ff00; opacity: 0.8; }
+    @keyframes winamp-scale {
+      0%, 100% { transform: scale(1, -0.15); }
+      50% { transform: scale(1, -1.0); }
+    }
+    .winamp-bar { fill: #00ff00; transform-origin: 0 0; }
+    .wbar1 { animation: winamp-scale 0.8s infinite ease-in-out; animation-delay: 0.1s; }
+    .wbar2 { animation: winamp-scale 1.1s infinite ease-in-out; animation-delay: 0.4s; }
+    .wbar3 { animation: winamp-scale 0.9s infinite ease-in-out; animation-delay: 0.2s; }
+    .wbar4 { animation: winamp-scale 1.3s infinite ease-in-out; animation-delay: 0.6s; }
+    .wbar5 { animation: winamp-scale 1.0s infinite ease-in-out; animation-delay: 0.3s; }
+
+    /* iPod Styles */
+    .ipod-title { font: 700 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; fill: #111111; }
+    .ipod-artist { font: 400 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; fill: #555555; }
+    @keyframes ipod-scale {
+      0%, 100% { transform: scale(1, -0.2); }
+      50% { transform: scale(1, -1.0); }
+    }
+    .ipod-bar { fill: #${accentColor}; transform-origin: 0 0; }
+    .ibar1 { animation: ipod-scale 0.9s infinite ease-in-out; animation-delay: 0.1s; }
+    .ibar2 { animation: ipod-scale 1.2s infinite ease-in-out; animation-delay: 0.4s; }
+    .ibar3 { animation: ipod-scale 0.8s infinite ease-in-out; animation-delay: 0.2s; }
+    .ibar4 { animation: ipod-scale 1.1s infinite ease-in-out; animation-delay: 0.5s; }
+
+    /* Cassette Styles */
+    .cassette-title { font: 700 12px monospace; fill: #ffffff; }
+    .cassette-artist { font: 400 10px monospace; fill: #d4af37; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .reel { transform-origin: center; animation: spin 4s linear infinite; }
+
+    /* Boombox Styles */
+    .boombox-title { font: 700 13px monospace; fill: #00ff00; filter: drop-shadow(0 0 2px #00ff00); }
+    .boombox-artist { font: 400 11px monospace; fill: #00ff00; opacity: 0.7; }
+    @keyframes boombox-scale {
+      0%, 100% { transform: scale(1, -0.15); }
+      50% { transform: scale(1, -1.0); }
+    }
+    .boombox-bar { fill: #00ff00; transform-origin: 0 0; }
+    .bbar1 { animation: boombox-scale 0.7s infinite ease-in-out; animation-delay: 0s; }
+    .bbar2 { animation: boombox-scale 1.0s infinite ease-in-out; animation-delay: 0.3s; }
+    .bbar3 { animation: boombox-scale 0.8s infinite ease-in-out; animation-delay: 0.15s; }
   `;
 
   if (player === "ipod") {
@@ -78,15 +112,15 @@ function generateMusicSVG(options) {
       <rect x="20" y="15" width="130" height="90" fill="#222" rx="6" stroke="#444" stroke-width="2"/>
       ${gif_url ? `<image href="${gif_url}" x="25" y="20" width="120" height="80" preserveAspectRatio="xMidYMid slice" clip-path="inset(0% round 4px)"/>` : `
         <g transform="translate(45, 95)">
-          <rect class="bar bar1" x="0" y="0" width="12" height="20" transform="scale(1,-1)" rx="1"/>
-          <rect class="bar bar2" x="18" y="0" width="12" height="30" transform="scale(1,-1)" rx="1"/>
-          <rect class="bar bar3" x="36" y="0" width="12" height="25" transform="scale(1,-1)" rx="1"/>
-          <rect class="bar bar4" x="54" y="0" width="12" height="35" transform="scale(1,-1)" rx="1"/>
+          <rect class="ipod-bar ibar1" x="0" y="0" width="12" height="20" rx="1"/>
+          <rect class="ipod-bar ibar2" x="18" y="0" width="12" height="30" rx="1"/>
+          <rect class="ipod-bar ibar3" x="36" y="0" width="12" height="25" rx="1"/>
+          <rect class="ipod-bar ibar4" x="54" y="0" width="12" height="35" rx="1"/>
         </g>
       `}
       <g transform="translate(170, 40)">
-        <text class="title" y="0">${escapeXml(title)}</text>
-        <text class="artist" y="22" opacity="0.8">${escapeXml(artist)}</text>
+        <text class="ipod-title" y="0">${escapeXml(title)}</text>
+        <text class="ipod-artist" y="22" opacity="0.8">${escapeXml(artist)}</text>
       </g>
       <g transform="translate(290, 65)">
         <circle r="40" fill="#fff" stroke="#bbb" stroke-width="1.5"/>
@@ -99,10 +133,6 @@ function generateMusicSVG(options) {
       </g>
     `;
   } else if (player === "cassette") {
-    styleTags += `
-      @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      .reel { transform-origin: center; animation: spin 4s linear infinite; }
-    `;
     playerContent = `
       <defs>
         <linearGradient id="cassetteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -125,10 +155,10 @@ function generateMusicSVG(options) {
       </g>
 
       <g transform="translate(200, 35)" text-anchor="middle">
-         <text class="title" y="0" font-size="11" fill="#fff">${escapeXml(title)}</text>
+         <text class="cassette-title" y="0">${escapeXml(title)}</text>
       </g>
       <g transform="translate(200, 95)" text-anchor="middle">
-         <text class="artist" y="0" font-size="9" fill="#d4af37">${escapeXml(artist)}</text>
+         <text class="cassette-artist" y="0">${escapeXml(artist)}</text>
       </g>
 
       ${gif_url ? `<image href="${gif_url}" x="150" y="45" width="100" height="30" opacity="0.4"/>` : ""}
@@ -156,16 +186,16 @@ function generateMusicSVG(options) {
 
       <!-- Display -->
       <rect x="120" y="30" width="160" height="60" fill="#000" rx="4" stroke="#0f0" stroke-width="1" stroke-opacity="0.3"/>
-      <g transform="translate(130, 50)">
-        <text class="title glow" y="0" font-size="13" fill="#0f0" font-family="monospace">${escapeXml(title)}</text>
-        <text class="artist" y="22" font-size="10" fill="#0f0" opacity="0.7" font-family="monospace">${escapeXml(artist)}</text>
+      <g transform="translate(130, 52)">
+        <text class="boombox-title" y="0">${escapeXml(title)}</text>
+        <text class="boombox-artist" y="22">${escapeXml(artist)}</text>
       </g>
 
       <!-- Viz in display -->
       <g transform="translate(240, 80)">
-        <rect class="bar bar1" x="0" y="0" width="5" height="20" transform="scale(1,-1)"/>
-        <rect class="bar bar2" x="7" y="0" width="5" height="25" transform="scale(1,-1)"/>
-        <rect class="bar bar3" x="14" y="0" width="5" height="18" transform="scale(1,-1)"/>
+        <rect class="boombox-bar bbar1" x="0" y="0" width="5" height="20"/>
+        <rect class="boombox-bar bbar2" x="7" y="0" width="5" height="25"/>
+        <rect class="boombox-bar bbar3" x="14" y="0" width="5" height="18"/>
       </g>
 
       <a href="${trackUrl}" target="_blank">
@@ -173,7 +203,7 @@ function generateMusicSVG(options) {
       </a>
     `;
   } else {
-    // Default 90s Winamp style - Enhanced
+    // Default 90s Winamp style
     playerContent = `
       <defs>
         <linearGradient id="winampGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -191,18 +221,18 @@ function generateMusicSVG(options) {
       <rect x="10" y="25" width="80" height="55" fill="#000" stroke="#444"/>
       ${gif_url ? `<image href="${gif_url}" x="11" y="26" width="78" height="53" preserveAspectRatio="xMidYMid slice"/>` : `
         <g transform="translate(15, 75)">
-          <rect class="bar bar1" x="0" y="0" width="10" height="30" transform="scale(1,-1)"/>
-          <rect class="bar bar2" x="12" y="0" width="10" height="45" transform="scale(1,-1)"/>
-          <rect class="bar bar3" x="24" y="0" width="10" height="35" transform="scale(1,-1)"/>
-          <rect class="bar bar4" x="36" y="0" width="10" height="50" transform="scale(1,-1)"/>
-          <rect class="bar bar5" x="48" y="0" width="10" height="40" transform="scale(1,-1)"/>
+          <rect class="winamp-bar wbar1" x="0" y="0" width="10" height="30" rx="1"/>
+          <rect class="winamp-bar wbar2" x="12" y="0" width="10" height="45" rx="1"/>
+          <rect class="winamp-bar wbar3" x="24" y="0" width="10" height="35" rx="1"/>
+          <rect class="winamp-bar wbar4" x="36" y="0" width="10" height="50" rx="1"/>
+          <rect class="winamp-bar wbar5" x="48" y="0" width="10" height="40" rx="1"/>
         </g>
       `}
 
       <!-- Song Info -->
-      <g transform="translate(100, 45)">
-        <text class="title" y="0" font-family="monospace" font-size="16" fill="#0f0" style="filter: drop-shadow(0 0 2px #0f0)">${escapeXml(title)}</text>
-        <text class="artist" y="25" font-family="monospace" font-size="12" fill="#0f0" opacity="0.8">${escapeXml(artist)}</text>
+      <g transform="translate(100, 48)">
+        <text class="winamp-title" y="0">${escapeXml(title)}</text>
+        <text class="winamp-artist" y="25">${escapeXml(artist)}</text>
       </g>
 
       <!-- Controls -->

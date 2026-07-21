@@ -98,14 +98,16 @@ function generateMasterCardSVG(options) {
   const topLangs = languages.slice(0, 8);
   topLangs.forEach((lang, i) => {
     const ly = i * 35;
-    const barMax = gridW - 150;
+    const barMax = 240;
     const barW = (lang.percentage / 100) * barMax;
+    const maxLabelLen = 15;
+    const displayName = lang.name.length > maxLabelLen ? lang.name.substring(0, maxLabelLen - 3) + "..." : lang.name;
     content += `
     <g transform="translate(0, ${ly})">
       <circle cx="8" cy="12" r="6" fill="#${getLanguageColor(lang.name)}"/>
-      <text x="25" y="17" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="15" font-weight="600" fill="#${textColor}">${escapeXml(lang.name)}</text>
-      <rect x="120" y="8" width="${barMax}" height="10" rx="5" fill="#30363d" opacity="0.4"/>
-      <rect x="120" y="8" width="${barW}" height="10" rx="5" fill="#${getLanguageColor(lang.name)}"/>
+      <text x="25" y="17" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="15" font-weight="600" fill="#${textColor}">${escapeXml(displayName)}</text>
+      <rect x="160" y="8" width="${barMax}" height="10" rx="5" fill="#30363d" opacity="0.4"/>
+      <rect x="160" y="8" width="${barW}" height="10" rx="5" fill="#${getLanguageColor(lang.name)}"/>
       <text x="${gridW}" y="17" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#8b949e">${lang.percentage.toFixed(1)}%</text>
     </g>`;
   });
@@ -120,12 +122,12 @@ function generateMasterCardSVG(options) {
   daysOfWeek.forEach((day, i) => {
     const ly = i * 35;
     const count = weekMap[i] || 0;
-    const barW = (count / maxWeekly) * (gridW - 120);
+    const barW = (count / maxWeekly) * 300;
     content += `
     <g transform="translate(0, ${ly})">
       <text x="0" y="17" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="14" font-weight="600" fill="#8b949e">${day}</text>
-      <rect x="90" y="8" width="${gridW - 120}" height="10" rx="5" fill="#30363d" opacity="0.4"/>
-      <rect x="90" y="8" width="${barW}" height="10" rx="5" fill="#39d353" opacity="0.8"/>
+      <rect x="100" y="8" width="300" height="10" rx="5" fill="#30363d" opacity="0.4"/>
+      <rect x="100" y="8" width="${barW}" height="10" rx="5" fill="#39d353" opacity="0.8"/>
       <text x="${gridW}" y="17" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="14" font-weight="800" fill="#39d353">${count.toLocaleString()}</text>
     </g>`;
   });
