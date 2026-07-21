@@ -20,7 +20,7 @@ function generateLanguageSVG(options) {
   const barY = headerHeight + 8;
   const listStartY = barY + barHeight + 20;
   const listItemHeight = 24;
-  const cols = Math.min(topLangs.length, 6);
+  const cols = Math.min(topLangs.length, 3);
   const rows = Math.ceil(topLangs.length / cols);
   const listHeight = rows * listItemHeight;
   const cardWidth = 460;
@@ -48,10 +48,13 @@ function generateLanguageSVG(options) {
     const color = getLanguageColor(lang.name);
     const pct = lang.percentage >= 10 ? Math.round(lang.percentage) : lang.percentage.toFixed(1);
 
+    const maxLabelLen = 18;
+    const displayName = lang.name.length > maxLabelLen ? lang.name.substring(0, maxLabelLen - 3) + "..." : lang.name;
+
     langList += `
     <g transform="translate(${x}, ${y})">
       <circle cx="6" cy="10" r="5" fill="#${color}"/>
-      <text x="16" y="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11" fill="#e6edf3">${escapeXml(lang.name)}</text>
+      <text x="16" y="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11" fill="#e6edf3">${escapeXml(displayName)}</text>
       <text x="16" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" fill="#8b949e">${pct}%</text>
     </g>`;
   });
@@ -96,13 +99,23 @@ function generateLanguageCompactSVG(options) {
   });
 
   let labels = "";
-  let labelX = padX;
-  topLangs.forEach((lang) => {
+  const cols = 3;
+  const colWidth = (cardWidth - padX * 2) / cols;
+
+  topLangs.forEach((lang, index) => {
     const color = getLanguageColor(lang.name);
     const pct = lang.percentage >= 10 ? Math.round(lang.percentage) : lang.percentage.toFixed(1);
-    labels += `<circle cx="${labelX + 5}" cy="84" r="4" fill="#${color}"/>`;
-    labels += `<text x="${labelX + 13}" y="87" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10" fill="#8b949e">${escapeXml(lang.name)} ${pct}%</text>`;
-    labelX += 84;
+
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+    const labelX = padX + col * colWidth;
+    const labelY = 84 + row * 18;
+
+    const maxLabelLen = 16;
+    const displayName = lang.name.length > maxLabelLen ? lang.name.substring(0, maxLabelLen - 3) + "..." : lang.name;
+
+    labels += `<circle cx="${labelX + 5}" cy="${labelY}" r="4" fill="#${color}"/>`;
+    labels += `<text x="${labelX + 13}" y="${labelY + 3}" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10" fill="#8b949e">${escapeXml(displayName)} ${pct}%</text>`;
   });
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${cardWidth}" height="${cardHeight}" viewBox="0 0 ${cardWidth} ${cardHeight}">
